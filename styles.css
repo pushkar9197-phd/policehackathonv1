@@ -956,7 +956,7 @@ body {
 .drop-zone-large {
   border: 2px dashed #CBD5E1;
   border-radius: 8px;
-  padding: 24px 20px;
+  padding: 16px 14px;
   text-align: center;
   background: #F8FAFC;
   color: #0F172A;
@@ -1211,8 +1211,8 @@ body {
   border: 1px solid #334155;
   border-radius: 6px;
   padding: 14px;
-  height: 240px;
-  max-height: 280px;
+  height: 140px;
+  max-height: 160px;
   overflow-y: auto;
   font-size: 11px;
   font-family: var(--font-mono);

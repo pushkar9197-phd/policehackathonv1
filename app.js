@@ -1283,22 +1283,22 @@ function renderStagedCards() {
   grid.innerHTML = STAGED_FILES_QUEUE.map(item => {
     if (item.isImage) {
       return `
-        <div class="staged-file-card" id="card-${item.id}">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div style="font-weight: 600; font-size: 11px; color: #f8fafc; max-width: 210px; word-break: break-all;">
+        <div class="staged-file-card" id="card-${item.id}" style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+            <div style="font-weight: 700; font-size: 11.5px; color: #0F172A; max-width: 210px; word-break: break-all;">
               ${escapeHtml(item.name)}
             </div>
-            <button type="button" class="btn btn-sm btn-gov-secondary" onclick="removeStagedFile('${item.id}')" style="padding: 1px 6px; font-size: 10px; color: #ef4444;" title="Remove this file">✖</button>
+            <button type="button" class="btn btn-sm btn-gov-secondary" onclick="removeStagedFile('${item.id}')" style="padding: 1px 6px; font-size: 10px; color: #DC2626;" title="Remove this file">✖</button>
           </div>
           <div style="display: flex; gap: 10px; align-items: center;">
-            <div style="width: 75px; height: 75px; border-radius: 4px; overflow: hidden; background: #020617; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <div style="width: 68px; height: 68px; border-radius: 6px; overflow: hidden; background: #F8FAFC; border: 1px solid #CBD5E1; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
               <img src="${item.previewUrl}" alt="Evidence Preview" style="max-width: 100%; max-height: 100%; object-fit: cover;">
             </div>
-            <div style="font-size: 10px; color: #94a3b8; flex: 1;">
-              <div>${item.typeBadge}</div>
-              <div class="mono" style="margin-top: 2px;">Size: ${(item.size / 1024).toFixed(1)} KB</div>
-              <div style="margin-top: 6px; background: rgba(30, 41, 59, 0.5); padding: 4px 6px; border-radius: 4px; border: 1px solid #334155;">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: ${item.runOcr ? '#38bdf8' : '#94a3b8'}; font-weight: 600;">
+            <div style="font-size: 10.5px; color: #475569; flex: 1;">
+              <div style="font-weight: 600;">${item.typeBadge}</div>
+              <div class="mono" style="margin-top: 2px; color: #64748B;">Size: ${(item.size / 1024).toFixed(1)} KB</div>
+              <div style="margin-top: 4px; background: #EFF6FF; padding: 3px 6px; border-radius: 4px; border: 1px solid #BFDBFE;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: #1D4ED8; font-weight: 600; font-size: 10.5px;">
                   <input type="checkbox" id="ocr-opt-${item.id}" ${item.runOcr ? 'checked' : ''} onchange="toggleStagedOcr('${item.id}', this.checked)">
                   <span>Run Neural OCR</span>
                 </label>
@@ -1309,18 +1309,18 @@ function renderStagedCards() {
       `;
     } else {
       return `
-        <div class="staged-file-card" id="card-${item.id}">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div style="font-weight: 600; font-size: 11px; color: #f8fafc; max-width: 210px; word-break: break-all;">
+        <div class="staged-file-card" id="card-${item.id}" style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+            <div style="font-weight: 700; font-size: 11.5px; color: #0F172A; max-width: 210px; word-break: break-all;">
               ${escapeHtml(item.name)}
             </div>
-            <button type="button" class="btn btn-sm btn-gov-secondary" onclick="removeStagedFile('${item.id}')" style="padding: 1px 6px; font-size: 10px; color: #ef4444;" title="Remove this file">✖</button>
+            <button type="button" class="btn btn-sm btn-gov-secondary" onclick="removeStagedFile('${item.id}')" style="padding: 1px 6px; font-size: 10px; color: #DC2626;" title="Remove this file">✖</button>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8;">
-            <span class="badge badge-sm badge-neutral">${item.typeBadge}</span>
-            <span class="mono">${(item.size / 1024).toFixed(1)} KB</span>
+          <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: #475569; margin-bottom: 6px;">
+            <span class="badge badge-sm badge-blue">${item.typeBadge}</span>
+            <span class="mono text-muted">${(item.size / 1024).toFixed(1)} KB</span>
           </div>
-          <div style="background: #020617; border: 1px solid #1e293b; border-radius: 4px; padding: 6px 8px; font-family: monospace; font-size: 9.5px; color: #cbd5e1; max-height: 70px; overflow-y: auto; white-space: pre-wrap; line-height: 1.3;">${escapeHtml(item.textPreview)}</div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 6px 8px; font-family: monospace; font-size: 10px; color: #334155; max-height: 48px; overflow: hidden; white-space: pre-wrap; line-height: 1.35;">${escapeHtml(item.textPreview)}</div>
         </div>
       `;
     }
@@ -1358,17 +1358,20 @@ function setEnginePreset(preset) {
   const modSlm = document.getElementById('mod-slm');
   const modAntifragile = document.getElementById('mod-antifragile');
 
+  if (accCard) {
+    accCard.style.borderColor = '';
+    accCard.style.background = '';
+    accCard.style.boxShadow = '';
+    accCard.classList.toggle('active', preset === 'accuracy');
+  }
+  if (lightCard) {
+    lightCard.style.borderColor = '';
+    lightCard.style.background = '';
+    lightCard.style.boxShadow = '';
+    lightCard.classList.toggle('active', preset === 'light');
+  }
+
   if (preset === 'accuracy') {
-    if (accCard) {
-      accCard.style.borderColor = '#38bdf8';
-      accCard.style.background = 'rgba(56, 189, 248, 0.08)';
-      accCard.style.boxShadow = '0 0 10px rgba(56, 189, 248, 0.15)';
-    }
-    if (lightCard) {
-      lightCard.style.borderColor = '#334155';
-      lightCard.style.background = 'rgba(15, 23, 42, 0.6)';
-      lightCard.style.boxShadow = 'none';
-    }
     if (ocrBadge) {
       ocrBadge.className = 'badge badge-sm badge-blue';
       ocrBadge.textContent = '📸 Neural OCR: dots.ocr (Qwen2-1.7B ViT) Active';
@@ -1379,23 +1382,13 @@ function setEnginePreset(preset) {
     CASE_METADATA.mode = 'accuracy';
     showToast("🧠 Accuracy Mode Active: LiquidAI LFM2.5 + dots.ocr ViT", "info");
   } else {
-    if (accCard) {
-      accCard.style.borderColor = '#334155';
-      accCard.style.background = 'rgba(15, 23, 42, 0.6)';
-      accCard.style.boxShadow = 'none';
-    }
-    if (lightCard) {
-      lightCard.style.borderColor = '#10b981';
-      lightCard.style.background = 'rgba(16, 185, 129, 0.08)';
-      lightCard.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.15)';
-    }
     if (ocrBadge) {
       ocrBadge.className = 'badge badge-sm badge-green';
       ocrBadge.textContent = '⚡ Fast OCR: Tesseract 5.5.2 (Zero GPU Overhead)';
     }
     if (modSlm) modSlm.checked = false;
     if (modAntifragile) modAntifragile.checked = false;
-    if (slmGroup) slmGroup.style.opacity = '0.4';
+    if (slmGroup) slmGroup.style.opacity = '0.7';
     CASE_METADATA.mode = 'light';
     showToast("⚡ Light Mode Active: Tesseract OCR + Deterministic Financial Regex", "info");
   }
