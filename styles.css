@@ -1237,7 +1237,7 @@ body {
    WORKBENCH LAYOUT: SEGREGATED TABBED & SPLIT VIEW MODES
    ========================================================================== */
 .workbench-layout {
-  display: flex !important;
+  display: flex;
   flex-direction: column;
   height: calc(100vh - 58px);
   max-height: calc(100vh - 58px);
@@ -1245,6 +1245,10 @@ body {
   background: #F1F5F9;
   padding: 10px 14px 14px 14px;
   gap: 8px;
+}
+
+.workbench-layout[style*="display: none"] {
+  display: none !important;
 }
 
 /* Workbench Segmented Tab Bar */

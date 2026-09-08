@@ -276,40 +276,20 @@ if (-not $PythonBin) {
     exit 1
 }
 
-# Test if an existing server is active and healthy
-$isAlreadyHealthy = $false
+# Terminate any existing server processes on port 8000 to ensure fresh code execution
 try {
-    $healthResp = Invoke-RestMethod -Uri "http://127.0.0.1:$WebPort/api/health" -TimeoutSec 2 -ErrorAction Stop
-    if ($healthResp.status -eq "online") {
-        $isAlreadyHealthy = $true
-    }
-} catch {
-    $isAlreadyHealthy = $false
-}
-
-# Clean up any dead, stale or lingering processes on port 8000 if not healthy or ForceRestart
-if ((-not $isAlreadyHealthy) -or $ForceRestart) {
-    try {
-        $staleConns = Get-NetTCPConnection -LocalPort $WebPort -ErrorAction SilentlyContinue | Where-Object { $_.State -eq 'Listen' }
-        foreach ($conn in $staleConns) {
-            if ($conn.OwningProcess -and $conn.OwningProcess -gt 4) {
-                Write-Host "   [CLEANUP] Terminating stale process on port $WebPort (PID: $($conn.OwningProcess))..." -ForegroundColor Yellow
-                Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue
-            }
+    $staleConns = Get-NetTCPConnection -LocalPort $WebPort -ErrorAction SilentlyContinue | Where-Object { $_.State -eq 'Listen' }
+    foreach ($conn in $staleConns) {
+        if ($conn.OwningProcess -and $conn.OwningProcess -gt 4) {
+            Write-Host "   [CLEANUP] Stopping existing server process on port $WebPort (PID: $($conn.OwningProcess))..." -ForegroundColor Yellow
+            Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue
         }
-        Start-Sleep -Milliseconds 600
-    } catch {
-        # Ignore cleanup errors if port was already free
     }
-    $isAlreadyHealthy = $false
-}
+    Start-Sleep -Milliseconds 600
+} catch {}
 
 $ServerProcess = $null
-
-if ($isAlreadyHealthy) {
-    Write-Host "   [OK] Forensic Web Server is already active and healthy on http://localhost:$WebPort" -ForegroundColor Green
-} else {
-    Write-Host "   [INIT] Starting server.py on http://127.0.0.1:$WebPort..." -ForegroundColor Cyan
+Write-Host "   [INIT] Starting server.py on http://127.0.0.1:$WebPort..." -ForegroundColor Cyan
 
     $stdoutPath = Join-Path $ScriptDir "logs\web_server.log"
     $stderrPath = Join-Path $ScriptDir "logs\web_server_err.log"
@@ -356,7 +336,6 @@ if ($isAlreadyHealthy) {
     } else {
         Write-Host "   [NOTICE] Server launched. FTS5 index initialization may complete shortly." -ForegroundColor DarkYellow
     }
-}
 
 # Auto-launch browser
 $WebUrl = "http://localhost:$WebPort"

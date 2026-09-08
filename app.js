@@ -697,9 +697,11 @@ function updateScopeTabs() {
 }
 
 function goToCaseDocket() {
-  document.querySelectorAll('.wizard-screen').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.wizard-screen').forEach(s => {
+    s.style.setProperty('display', 'none', 'important');
+  });
   const dash = document.getElementById('screen-dashboard');
-  if (dash) dash.style.display = 'none';
+  if (dash) dash.style.setProperty('display', 'none', 'important');
   const stepper = document.getElementById('wizard-stepper');
   if (stepper) stepper.style.display = 'none';
   const resetBtn = document.getElementById('btn-reset-workflow');
@@ -710,10 +712,12 @@ function goToCaseDocket() {
   if (modelBadge) modelBadge.style.display = 'none';
 
   const graphScreen = document.getElementById('screen-graph-view');
-  if (graphScreen) graphScreen.style.display = 'none';
+  if (graphScreen) graphScreen.style.setProperty('display', 'none', 'important');
 
   const casesScreen = document.getElementById('screen-cases');
-  if (casesScreen) casesScreen.style.display = 'block';
+  if (casesScreen) {
+    casesScreen.style.setProperty('display', 'block', 'important');
+  }
 
   // Update Nav links
   const navDocket = document.getElementById('nav-btn-docket');
@@ -728,7 +732,9 @@ function goToCaseDocket() {
 
 function goToWorkbench() {
   const graphScreen = document.getElementById('screen-graph-view');
-  if (graphScreen) graphScreen.style.display = 'none';
+  if (graphScreen) graphScreen.style.setProperty('display', 'none', 'important');
+  const casesScreen = document.getElementById('screen-cases');
+  if (casesScreen) casesScreen.style.setProperty('display', 'none', 'important');
 
   goToStep(5);
   const navDocket = document.getElementById('nav-btn-docket');
@@ -740,15 +746,17 @@ function goToWorkbench() {
 }
 
 function goToNetworkGraphView() {
-  document.querySelectorAll('.wizard-screen').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.wizard-screen').forEach(s => {
+    s.style.setProperty('display', 'none', 'important');
+  });
   const dash = document.getElementById('screen-dashboard');
-  if (dash) dash.style.display = 'none';
+  if (dash) dash.style.setProperty('display', 'none', 'important');
   const stepper = document.getElementById('wizard-stepper');
   if (stepper) stepper.style.display = 'none';
   const resetBtn = document.getElementById('btn-reset-workflow');
   if (resetBtn) resetBtn.style.display = 'none';
   const casesScreen = document.getElementById('screen-cases');
-  if (casesScreen) casesScreen.style.display = 'none';
+  if (casesScreen) casesScreen.style.setProperty('display', 'none', 'important');
 
   // Keep case pill and model badge visible so user can see active FIR
   const casePill = document.getElementById('header-active-case-pill');
@@ -757,7 +765,7 @@ function goToNetworkGraphView() {
   if (modelBadge) modelBadge.style.display = 'inline-flex';
 
   const graphScreen = document.getElementById('screen-graph-view');
-  if (graphScreen) graphScreen.style.display = 'block';
+  if (graphScreen) graphScreen.style.setProperty('display', 'block', 'important');
 
   // Update Nav links
   const navDocket = document.getElementById('nav-btn-docket');
