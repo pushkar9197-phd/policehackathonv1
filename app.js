@@ -2697,7 +2697,7 @@ function renderTriageCards() {
         </div>
 
         <div class="text-xs text-muted" style="margin-bottom: 6px;">
-          <strong>Corroboration:</strong> ${lead.corroboration ? escapeHtml(lead.corroboration.basis) : 'Extracted from evidence record.'}
+          <strong>Corroboration:</strong> ${lead.corroboration ? escapeHtml((lead.corroboration.basis || "").replace(/&bull;/g, " • ")) : 'Extracted from evidence record.'}
           ${isCrossHit ? `
             <div style="color: #f87171; font-weight: 600; margin-top: 3px;">
               🔗 Corroborated in historical FIR: <strong>${escapeHtml(lead.crossCaseHit.matched_fir)}</strong> (${escapeHtml(lead.crossCaseHit.matched_ps || 'Precinct')})
@@ -4233,7 +4233,7 @@ function openDossierModal() {
         <td><strong>${escapeHtml(l.type)}</strong></td>
         <td class="mono font-bold">${escapeHtml(l.value)}</td>
         <td class="mono text-xs">${escapeHtml(l.fileName)} [Line ${l.lineNum}]</td>
-        <td class="text-xs">${l.corroboration ? escapeHtml(l.corroboration.basis) : 'Verified Lead'}</td>
+        <td class="text-xs">${l.corroboration ? escapeHtml((l.corroboration.basis || "").replace(/&bull;/g, " • ")) : 'Verified Lead'}</td>
         <td><span style="color: #15803D; font-weight: bold;">VERIFIED & ADMISSIBLE ✓</span></td>
       </tr>
     `).join("");

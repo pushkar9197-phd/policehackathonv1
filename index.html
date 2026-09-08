@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chandigarh Police - Cyber Crime Forensic Workbench (BSA Sec 63)</title>
-  <link rel="stylesheet" href="styles.css?v=20260908v4">
+  <link rel="stylesheet" href="styles.css?v=20260908_light">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -12,38 +12,39 @@
     #modal-officer-profiles .modal-container,
     #modal-share-case .modal-container,
     .modal-container-dark {
-      background: #0f172a !important;
-      border: 1px solid #334155 !important;
-      color: #f1f5f9 !important;
-      box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.7) !important;
+      background: #FFFFFF !important;
+      border: 1px solid #CBD5E1 !important;
+      color: #0F172A !important;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.15) !important;
     }
     #modal-officer-profiles .modal-header,
     #modal-share-case .modal-header {
-      background: #0b1120 !important;
-      border-bottom: 1px solid #1e293b !important;
+      background: #F8FAFC !important;
+      border-bottom: 1px solid #E2E8F0 !important;
+      color: #0F172A !important;
     }
     #modal-officer-profiles .modal-body,
     #modal-share-case .modal-body {
-      background: #0f172a !important;
-      color: #f1f5f9 !important;
+      background: #FFFFFF !important;
+      color: #0F172A !important;
     }
     #modal-officer-profiles .modal-footer,
     #modal-share-case .modal-footer {
-      background: #0b1120 !important;
-      border-top: 1px solid #1e293b !important;
+      background: #F8FAFC !important;
+      border-top: 1px solid #E2E8F0 !important;
     }
     .modal-tabs-header {
       display: flex !important;
       gap: 6px !important;
       padding: 10px 20px 0 20px !important;
-      border-bottom: 1px solid #1e293b !important;
-      background: #0b1120 !important;
+      border-bottom: 1px solid #E2E8F0 !important;
+      background: #F8FAFC !important;
     }
     .modal-tab-btn {
       background: transparent !important;
       border: none !important;
       border-bottom: 2px solid transparent !important;
-      color: #94a3b8 !important;
+      color: #64748B !important;
       font-size: 12px !important;
       font-weight: 600 !important;
       padding: 8px 16px !important;
@@ -51,13 +52,13 @@
       border-radius: 4px 4px 0 0 !important;
     }
     .modal-tab-btn:hover {
-      color: #ffffff !important;
-      background: rgba(255, 255, 255, 0.04) !important;
+      color: #0F172A !important;
+      background: rgba(0, 0, 0, 0.04) !important;
     }
     .modal-tab-btn.active {
-      color: #38bdf8 !important;
-      border-bottom: 2px solid #38bdf8 !important;
-      background: rgba(56, 189, 248, 0.08) !important;
+      color: #1D4ED8 !important;
+      border-bottom: 2px solid #1D4ED8 !important;
+      background: #EFF6FF !important;
       font-weight: 700 !important;
     }
     .profiles-card-grid {
@@ -67,30 +68,31 @@
       margin-top: 10px !important;
     }
     .profile-card {
-      background: #1e293b !important;
-      border: 1px solid #334155 !important;
+      background: #FFFFFF !important;
+      border: 1px solid #E2E8F0 !important;
       border-radius: 8px !important;
       padding: 14px !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
       position: relative !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
     }
     .profile-card:hover {
-      border-color: #60a5fa !important;
-      background: #24344d !important;
+      border-color: #3B82F6 !important;
+      background: #F8FAFC !important;
     }
     .profile-card.active {
-      border: 2px solid #38bdf8 !important;
-      background: rgba(14, 116, 144, 0.2) !important;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.3) !important;
+      border: 2px solid #1D4ED8 !important;
+      background: #EFF6FF !important;
+      box-shadow: 0 0 12px rgba(29, 78, 216, 0.2) !important;
     }
     .profile-card-badge-active {
       position: absolute !important;
       top: 10px !important;
       right: 10px !important;
-      background: #10b981 !important;
-      color: #064e3b !important;
+      background: #DCFCE7 !important;
+      color: #15803D !important;
       font-size: 9px !important;
       font-weight: 800 !important;
       padding: 2px 7px !important;
@@ -107,8 +109,8 @@
       width: 40px !important;
       height: 40px !important;
       border-radius: 8px !important;
-      background: rgba(59, 130, 246, 0.15) !important;
-      border: 1px solid rgba(59, 130, 246, 0.3) !important;
+      background: #EFF6FF !important;
+      border: 1px solid #BFDBFE !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
@@ -117,50 +119,53 @@
     .profile-card-name {
       font-size: 13.5px !important;
       font-weight: 700 !important;
-      color: #f8fafc !important;
+      color: #0F172A !important;
     }
-    .profile-card-rank { font-size: 11px !important; color: #94a3b8 !important; }
-    .profile-card-meta { font-size: 11px !important; color: #64748b !important; margin-bottom: 12px !important; }
+    .profile-card-rank { font-size: 11px !important; color: #475569 !important; }
+    .profile-card-meta { font-size: 11px !important; color: #64748B !important; margin-bottom: 12px !important; }
     .profile-card-stats {
       display: flex !important;
       gap: 8px !important;
       margin-bottom: 12px !important;
-      background: rgba(0, 0, 0, 0.25) !important;
+      background: #F8FAFC !important;
       padding: 8px !important;
       border-radius: 6px !important;
+      border: 1px solid #E2E8F0 !important;
     }
     .profile-stat-box { flex: 1 !important; }
-    .profile-stat-val { font-family: monospace !important; font-size: 14px !important; font-weight: 700 !important; color: #38bdf8 !important; }
-    .profile-stat-label { font-size: 9px !important; color: #94a3b8 !important; text-transform: uppercase !important; }
+    .profile-stat-val { font-family: monospace !important; font-size: 14px !important; font-weight: 700 !important; color: #1D4ED8 !important; }
+    .profile-stat-label { font-size: 9px !important; color: #64748B !important; text-transform: uppercase !important; }
     button.btn-header-profile, .btn-header-profile {
       display: inline-flex !important;
       align-items: center !important;
       gap: 7px !important;
-      background: rgba(30, 58, 138, 0.5) !important;
-      border: 1px solid rgba(96, 165, 250, 0.5) !important;
-      color: #f8fafc !important;
+      background: #F1F5F9 !important;
+      border: 1px solid #CBD5E1 !important;
+      color: #0F172A !important;
       padding: 4px 12px !important;
       border-radius: 20px !important;
       cursor: pointer !important;
       font-size: 11.5px !important;
       font-weight: 600 !important;
       white-space: nowrap !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     }
     .docket-scope-ribbon {
       display: flex !important;
       align-items: center !important;
       justify-content: space-between !important;
-      background: #0f172a !important;
-      border: 1px solid #1e293b !important;
+      background: #FFFFFF !important;
+      border: 1px solid #E2E8F0 !important;
       border-radius: 6px !important;
       padding: 8px 14px !important;
       margin-bottom: 12px !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
     }
     .docket-scope-tabs { display: flex !important; align-items: center !important; gap: 8px !important; }
     .docket-scope-tab {
-      background: transparent !important;
-      border: 1px solid #334155 !important;
-      color: #94a3b8 !important;
+      background: #F8FAFC !important;
+      border: 1px solid #CBD5E1 !important;
+      color: #475569 !important;
       font-size: 11.5px !important;
       font-weight: 600 !important;
       padding: 6px 14px !important;
@@ -168,9 +173,9 @@
       cursor: pointer !important;
     }
     .docket-scope-tab.active {
-      background: #1e3a8a !important;
-      color: #60a5fa !important;
-      border-color: #3b82f6 !important;
+      background: #EFF6FF !important;
+      color: #1D4ED8 !important;
+      border-color: #BFDBFE !important;
       font-weight: 700 !important;
     }
   </style>
