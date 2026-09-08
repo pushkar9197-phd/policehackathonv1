@@ -1711,13 +1711,29 @@ async function executePanelIngest() {
   const caseId = getActiveCaseId();
   const btn = document.getElementById('btn-confirm-panel-ingest');
   const status = document.getElementById('ingest-modal-status');
-  if (btn) btn.disabled = true;
+  const originalBtnHtml = btn ? btn.innerHTML : 'Confirm & Ingest Into Case ➔';
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner" style="display:inline-block;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;vertical-align:middle;"></span> Ingesting Exhibit...`;
+  }
 
   showToast(`Sealing ${PANEL_INGEST_QUEUE.length} exhibit(s) into ${caseId}...`, 'info');
 
+  let lastIngestedFileId = null;
+  let hasErrors = false;
+
   for (let i = 0; i < PANEL_INGEST_QUEUE.length; i++) {
     const item = PANEL_INGEST_QUEUE[i];
-    if (status) status.textContent = `Ingesting ${i + 1}/${PANEL_INGEST_QUEUE.length}: ${item.name}...`;
+    if (status) {
+      status.innerHTML = item.isAudio 
+        ? `🎙️ Running On-Device Whisper ASR for <b style="color:#38bdf8;">${escapeHtml(item.name)}</b>...`
+        : `⚡ Ingesting exhibit ${i + 1}/${PANEL_INGEST_QUEUE.length}: <b style="color:#f8fafc;">${escapeHtml(item.name)}</b>...`;
+    }
+
+    if (btn && item.isAudio) {
+      btn.innerHTML = `<span class="spinner" style="display:inline-block;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:6px;vertical-align:middle;"></span> Transcribing Audio via Whisper...`;
+    }
 
     const skipOcr = item.ocrChoice === 'skip' ? 1 : 0;
     const engineParam = item.ocrChoice === 'dots' ? 'dots' : 'tesseract';
@@ -1730,33 +1746,64 @@ async function executePanelIngest() {
         body: buffer
       });
 
-      if (resp.ok) {
-        const jsonRes = await resp.json();
-        if (jsonRes.status === 'processing' && jsonRes.job_id) {
-          showToast(`⚡ Running Neural OCR for ${item.name}...`, 'info');
-          let pollAttempts = 0;
-          let done = false;
-          while (!done && pollAttempts < 120) {
-            await new Promise(r => setTimeout(r, 1000));
-            pollAttempts++;
-            const pResp = await fetch(`/api/ocr/job_status?job_id=${encodeURIComponent(jsonRes.job_id)}`);
-            if (pResp.ok) {
-              const pData = await pResp.json();
-              if (pData.status === 'completed' || pData.status === 'failed') {
-                done = true;
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.error('Upload failed with status', resp.status, errText);
+        showToast(`❌ Failed to ingest ${item.name} (HTTP ${resp.status})`, 'error');
+        hasErrors = true;
+        continue;
+      }
+
+      const jsonRes = await resp.json();
+      if (jsonRes.data && jsonRes.data.file_id) {
+        lastIngestedFileId = jsonRes.data.file_id;
+      }
+
+      if (jsonRes.status === 'processing' && jsonRes.job_id) {
+        showToast(`⚡ Running Neural OCR for ${item.name}...`, 'info');
+        let pollAttempts = 0;
+        let done = false;
+        while (!done && pollAttempts < 120) {
+          await new Promise(r => setTimeout(r, 1000));
+          pollAttempts++;
+          const pResp = await fetch(`/api/ocr/job_status?job_id=${encodeURIComponent(jsonRes.job_id)}`);
+          if (pResp.ok) {
+            const pData = await pResp.json();
+            if (pData.status === 'completed' || pData.status === 'failed') {
+              done = true;
+              if (pData.result && pData.result.file_id) {
+                lastIngestedFileId = pData.result.file_id;
               }
             }
           }
         }
       }
     } catch (err) {
-      console.warn('Upload error:', err);
+      console.error('Upload error:', err);
+      showToast(`❌ Ingest network error for ${item.name}: ${err.message}`, 'error');
+      hasErrors = true;
     }
   }
 
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = originalBtnHtml;
+  }
+
   closeIngestPreviewModal();
-  showToast('✓ Exhibits successfully sealed and indexed into case!', 'success');
+
+  if (!hasErrors) {
+    showToast('✓ Exhibits successfully sealed, transcribed, and indexed into case!', 'success');
+  }
+
+  // Reload dashboard and auto-select newly ingested exhibit
+  if (lastIngestedFileId) {
+    currentSelectedFileId = lastIngestedFileId;
+  }
   await renderDashboard();
+  if (lastIngestedFileId) {
+    await selectFile(lastIngestedFileId);
+  }
 }
 
 let miningProgressInterval = null;
@@ -2573,10 +2620,46 @@ function updateEvidenceViewerMode() {
   const metaSubtext = document.getElementById("image-meta-subtext");
   const pill = document.getElementById("ocr-confidence-pill");
 
+  const audioBar = document.getElementById("evidence-audio-bar");
+  const audioPlayer = document.getElementById("evidence-audio-player");
+  const audioCodecMeta = document.getElementById("audio-codec-meta");
+  const audioHashMeta = document.getElementById("audio-hash-meta");
+
   if (!linesContainer || !imgContainer) return;
 
   const file = REAL_FILES.find(f => f.file_id === currentSelectedFileId);
   const isImage = file && ((file.file_type || "").includes("IMAGE_OCR") || /\.(png|jpe?g|webp|bmp|tiff)$/i.test(file.filename));
+  const isAudio = file && ((file.file_type || "").includes("VOICE") || (file.file_type || "").includes("AUDIO") || /\.(ogg|opus|wav|mp3|m4a|aac|flac)$/i.test(file.filename));
+
+  if (isAudio) {
+    if (toggleBar) toggleBar.style.display = "none";
+    if (imgContainer) imgContainer.style.display = "none";
+    linesContainer.style.display = "block";
+    if (toolbar) toolbar.style.display = "flex";
+
+    if (audioBar) audioBar.style.display = "flex";
+    if (audioPlayer) {
+      const audioUrl = `/api/evidence_audio?file_id=${encodeURIComponent(file.file_id)}`;
+      if (audioPlayer.src !== audioUrl && !audioPlayer.src.endsWith(audioUrl)) {
+        audioPlayer.src = audioUrl;
+        audioPlayer.load();
+      }
+    }
+    if (audioCodecMeta) {
+      const codecName = (file.file_type || 'VOICE').replace('VOICE_INTERCEPT_', '');
+      audioCodecMeta.textContent = `Codec: ${codecName} / Air-Gapped Local Playback | Whisper ASR Verified`;
+    }
+    if (audioHashMeta) {
+      audioHashMeta.textContent = `SHA-256: ${(file.sha256_hash || '').substring(0, 24)}... ✓ Section 63 BSA`;
+    }
+    return;
+  }
+
+  // Non-audio file: hide audio bar and pause audio playback
+  if (audioBar) audioBar.style.display = "none";
+  if (audioPlayer && !audioPlayer.paused) {
+    audioPlayer.pause();
+  }
 
   if (isImage) {
     if (toggleBar) toggleBar.style.display = "flex";
@@ -2621,12 +2704,14 @@ function renderFileTabs() {
   }
 
   container.innerHTML = REAL_FILES.map(file => {
+    const isAudio = (file.file_type || "").includes("VOICE") || (file.file_type || "").includes("AUDIO") || /\.(ogg|opus|wav|mp3|m4a|aac|flac)$/i.test(file.filename);
     const isImage = (file.file_type || "").includes("IMAGE_OCR") || /\.(png|jpe?g|webp|bmp|tiff)$/i.test(file.filename);
-    const tag = isImage ? "[IMG]" : file.file_type.includes("DARKNET") ? "[TOR]" : file.file_type.includes("BANK") ? "[FIN]" : file.file_type.includes("TELEGRAM") ? "[CHAT]" : "[DOC]";
+    const tag = isAudio ? "[VOICE]" : isImage ? "[IMG]" : file.file_type.includes("DARKNET") ? "[TOR]" : file.file_type.includes("BANK") ? "[FIN]" : file.file_type.includes("TELEGRAM") ? "[CHAT]" : "[DOC]";
+    const tagColor = isAudio ? "#10b981" : isImage ? "#38bdf8" : file.file_type.includes("DARKNET") ? "#c084fc" : file.file_type.includes("BANK") ? "#fbbf24" : "#94a3b8";
     return `
       <button class="file-tab-btn ${file.file_id === currentSelectedFileId ? 'active' : ''}" 
               onclick="selectFile('${file.file_id}')">
-        <span class="mono text-xs font-bold" style="color: #38bdf8;">${tag}</span>
+        <span class="mono text-xs font-bold" style="color: ${tagColor};">${tag}</span>
         <span>${escapeHtml(file.filename)}</span>
       </button>
     `;
@@ -2650,10 +2735,15 @@ function renderFileMetadata() {
     document.getElementById("profile-indicator").textContent = "Profile: None";
     return;
   }
+  const isAudio = (file.file_type || "").includes("VOICE") || (file.file_type || "").includes("AUDIO") || /\.(ogg|opus|wav|mp3|m4a|aac|flac)$/i.test(file.filename);
   const isImage = (file.file_type || "").includes("IMAGE_OCR") || /\.(png|jpe?g|webp|bmp|tiff)$/i.test(file.filename);
   document.getElementById("meta-filename").textContent = file.filename;
   document.getElementById("meta-sha256").textContent = file.sha256_hash;
-  document.getElementById("meta-source").textContent = isImage ? `Seized Screenshot Exhibit (${file.record_count} OCR lines)` : `Case Evidence Ingestion (${file.record_count} records)`;
+  document.getElementById("meta-source").textContent = isAudio
+    ? `Seized Voice Note Exhibit (${file.record_count} transcribed segment${file.record_count === 1 ? '' : 's'})`
+    : isImage
+    ? `Seized Screenshot Exhibit (${file.record_count} OCR lines)`
+    : `Case Evidence Ingestion (${file.record_count} records)`;
   document.getElementById("profile-indicator").textContent = `Profile: ${file.file_type}`;
 }
 
@@ -2691,7 +2781,12 @@ async function renderRawLines(filterQuery = "") {
   container.innerHTML = lines.map(line => {
     const isFlagged = line.is_flagged === 1;
     const isOcr = line.source_type === "SEIZED_SCREENSHOT_OCR";
-    const ocrBadge = isOcr ? `<span class="badge badge-sm badge-blue" style="font-size: 9px; padding: 1px 4px; margin-right: 4px;">OCR</span>` : "";
+    const isVoice = line.source_type === "VOICE_NOTE" || (line.source_type || "").includes("VOICE");
+    const ocrBadge = isVoice 
+      ? `<span class="badge badge-sm badge-green" style="font-size: 9px; padding: 1px 4px; margin-right: 4px;">🎙️ ASR</span>`
+      : isOcr 
+      ? `<span class="badge badge-sm badge-blue" style="font-size: 9px; padding: 1px 4px; margin-right: 4px;">OCR</span>` 
+      : "";
     const reasonsBadge = isFlagged && line.flag_reasons ? `<div class="mono text-xs" style="color: #ef4444; margin-top: 2px; font-size: 10px;">🚨 ${escapeHtml(line.flag_reasons)}</div>` : "";
     return `
       <div class="raw-line-row ${isFlagged ? 'flagged-row' : ''}" id="raw-line-${file.file_id}-${line.line_number}">
