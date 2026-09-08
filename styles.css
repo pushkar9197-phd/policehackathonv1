@@ -1913,6 +1913,15 @@ body {
    CASE REPOSITORY & FIR DOCKET LANDING PAGE
    Institutional Police Forensics Aesthetic
    ========================================================================== */
+#screen-cases {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 58px);
+  overflow-y: auto;
+  background: #080e1a;
+  padding: 0;
+}
+
 .cases-page-container {
   max-width: 1240px;
   width: 100%;
@@ -1921,8 +1930,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow-y: auto;
-  max-height: calc(100vh - 58px);
+  min-height: 100%;
 }
 
 .case-docket-header {
@@ -1976,6 +1984,16 @@ body {
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.case-docket-actions .btn-gov-secondary {
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid #334155;
+}
+.case-docket-actions .btn-gov-secondary:hover {
+  background: #334155;
+  border-color: #475569;
 }
 
 /* Docket Stats Ribbon */
@@ -2040,6 +2058,20 @@ body {
 .docket-search-icon {
   font-size: 13px;
   color: #64748b;
+}
+
+.docket-search-box .gov-input {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  width: 100%;
+}
+.docket-search-box .gov-input::placeholder {
+  color: #64748b;
+}
+.docket-search-box .gov-input:focus {
+  border-color: #3b82f6;
+  outline: none;
 }
 
 .docket-filters {

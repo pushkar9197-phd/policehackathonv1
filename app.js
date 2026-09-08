@@ -47,7 +47,7 @@ function getActiveCaseId() {
 
 async function loadSavedCasesList() {
   try {
-    const resp = await fetch("http://localhost:8000/api/cases");
+    const resp = await fetch("/api/cases");
     if (resp.ok) {
       const data = await resp.json();
       SAVED_CASES = data.cases || [];
@@ -206,7 +206,7 @@ function randomizeNewCase() {
 async function loadCaseFiles() {
   try {
     const caseId = getActiveCaseId();
-    const resp = await fetch(`http://localhost:8000/api/files?case_id=${encodeURIComponent(caseId)}`);
+    const resp = await fetch(`/api/files?case_id=${encodeURIComponent(caseId)}`);
     if (resp.ok) {
       const data = await resp.json();
       REAL_FILES = data.files || [];
@@ -223,7 +223,7 @@ async function loadCaseFiles() {
 async function loadTriageLeads() {
   try {
     const caseId = getActiveCaseId();
-    const resp = await fetch(`http://localhost:8000/api/leads?case_id=${encodeURIComponent(caseId)}`);
+    const resp = await fetch(`/api/leads?case_id=${encodeURIComponent(caseId)}`);
     if (resp.ok) {
       const data = await resp.json();
       REAL_TRIAGE_LEADS = data.leads || [];
@@ -236,7 +236,7 @@ async function loadTriageLeads() {
 async function loadCrossCaseIntelligence() {
   try {
     const caseId = getActiveCaseId();
-    const resp = await fetch(`http://localhost:8000/api/cross_case_matches?case_id=${encodeURIComponent(caseId)}`);
+    const resp = await fetch(`/api/cross_case_matches?case_id=${encodeURIComponent(caseId)}`);
     if (resp.ok) {
       const data = await resp.json();
       CROSS_CASE_MATCHES = data.matches || [];
@@ -312,7 +312,7 @@ function renderCrossCaseDossier() {
 async function fetchFileRecords(fileId) {
   if (REAL_FILE_RECORDS[fileId]) return REAL_FILE_RECORDS[fileId];
   try {
-    const resp = await fetch(`http://localhost:8000/api/file_records?file_id=${encodeURIComponent(fileId)}`);
+    const resp = await fetch(`/api/file_records?file_id=${encodeURIComponent(fileId)}`);
     if (resp.ok) {
       const data = await resp.json();
       REAL_FILE_RECORDS[fileId] = data.records || [];
@@ -736,9 +736,9 @@ async function renderCaseDocket() {
   const statEntities = document.getElementById("docket-stat-entities");
 
   try {
-    const url = ACTIVE_OFFICER.officer_id 
-      ? `http://localhost:8000/api/cases?officer_id=${encodeURIComponent(ACTIVE_OFFICER.officer_id)}`
-      : `http://localhost:8000/api/cases`;
+    const url = (typeof ACTIVE_OFFICER !== "undefined" && ACTIVE_OFFICER && ACTIVE_OFFICER.officer_id) 
+      ? `/api/cases?officer_id=${encodeURIComponent(ACTIVE_OFFICER.officer_id)}`
+      : `/api/cases`;
     const resp = await fetch(url);
     if (resp.ok) {
       const data = await resp.json();
@@ -1019,7 +1019,7 @@ async function proceedToStep2() {
 
   // Persist case into SQLite
   try {
-    await fetch("http://localhost:8000/api/cases/create", {
+    await fetch("/api/cases/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1516,7 +1516,7 @@ async function previewQuickOcr(itemId) {
 
   try {
     const buffer = await item.file.arrayBuffer();
-    const resp = await fetch('http://localhost:8000/api/quick_ocr_preview', {
+    const resp = await fetch('/api/quick_ocr_preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/octet-stream' },
       body: buffer
@@ -1566,7 +1566,7 @@ async function executePanelIngest() {
 
     try {
       const buffer = await item.file.arrayBuffer();
-      const resp = await fetch(`http://localhost:8000/api/upload?case_id=${encodeURIComponent(caseId)}&filename=${encodeURIComponent(item.name)}&skip_ocr=${skipOcr}&engine=${engineParam}`, {
+      const resp = await fetch(`/api/upload?case_id=${encodeURIComponent(caseId)}&filename=${encodeURIComponent(item.name)}&skip_ocr=${skipOcr}&engine=${engineParam}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/octet-stream' },
         body: buffer
@@ -1581,7 +1581,7 @@ async function executePanelIngest() {
           while (!done && pollAttempts < 120) {
             await new Promise(r => setTimeout(r, 1000));
             pollAttempts++;
-            const pResp = await fetch(`http://localhost:8000/api/ocr/job_status?job_id=${encodeURIComponent(jsonRes.job_id)}`);
+            const pResp = await fetch(`/api/ocr/job_status?job_id=${encodeURIComponent(jsonRes.job_id)}`);
             if (pResp.ok) {
               const pData = await pResp.json();
               if (pData.status === 'completed' || pData.status === 'failed') {
@@ -1673,7 +1673,7 @@ async function triggerSlmMiner() {
 
   try {
     logLine("HTTP", "Dispatched chunked extraction request to local backend...", "#38bdf8");
-    const resp = await fetch(`http://localhost:8000/api/mine_entities_slm?case_id=${encodeURIComponent(caseId)}&max_chunks=6`);
+    const resp = await fetch(`/api/mine_entities_slm?case_id=${encodeURIComponent(caseId)}&max_chunks=6`);
     
     if (miningProgressInterval) {
       clearInterval(miningProgressInterval);
@@ -1771,7 +1771,7 @@ async function autofillEvidenceFiles(datasetType = "default") {
   const label = isAdversarial ? "Adversarial Stress Corpus" : "Pre-staged Case Exhibits";
   showToast(`⚙️ Pre-fetching ${label} from storage...`, "info");
   try {
-    const resp = await fetch(`http://localhost:8000/api/load_demo_data?case_id=${encodeURIComponent(caseId)}&type=${encodeURIComponent(datasetType)}`, {
+    const resp = await fetch(`/api/load_demo_data?case_id=${encodeURIComponent(caseId)}&type=${encodeURIComponent(datasetType)}`, {
       method: "POST"
     });
     if (resp.ok) {
@@ -1848,7 +1848,7 @@ async function checkSlmServerStatus() {
   }
 
   try {
-    const resp = await fetch('http://localhost:8000/api/slm_status');
+    const resp = await fetch('/api/slm_status');
     if (resp.ok) {
       const data = await resp.json();
       if (data.status === "online") {
@@ -1893,7 +1893,7 @@ async function checkOcrServerStatus() {
   }
 
   try {
-    const resp = await fetch('http://localhost:8000/api/ocr_status');
+    const resp = await fetch('/api/ocr_status');
     if (resp.ok) {
       const data = await resp.json();
       if (data.status === "available") {
@@ -1950,7 +1950,7 @@ async function discoverLocalModels(overrideUrl = null) {
   }
 
   try {
-    const resp = await fetch(`http://localhost:8000/api/llm/models?url=${encodeURIComponent(serverUrl)}`);
+    const resp = await fetch(`/api/llm/models?url=${encodeURIComponent(serverUrl)}`);
     if (resp.ok) {
       const data = await resp.json();
       if (data.status === "online" && data.models && data.models.length > 0) {
@@ -2160,7 +2160,7 @@ async function startLoadingPipeline() {
     if (percText) percText.textContent = "25%";
 
     try {
-      const resp = await fetch(`http://localhost:8000/api/load_demo_data?case_id=${encodeURIComponent(caseId)}`, { method: "POST" });
+      const resp = await fetch(`/api/load_demo_data?case_id=${encodeURIComponent(caseId)}`, { method: "POST" });
       if (resp.ok) {
         const demoData = await resp.json();
         REAL_TOTAL_RECORDS = demoData.total_records || 683;
@@ -2197,7 +2197,7 @@ async function startLoadingPipeline() {
 
       try {
         const buffer = await item.file.arrayBuffer();
-        const uploadUrl = `http://localhost:8000/api/upload?case_id=${encodeURIComponent(caseId)}&filename=${encodeURIComponent(item.name)}&skip_ocr=${skipOcr}&engine=${ocrEngineParam}&mode=${CURRENT_ENGINE_PRESET}`;
+        const uploadUrl = `/api/upload?case_id=${encodeURIComponent(caseId)}&filename=${encodeURIComponent(item.name)}&skip_ocr=${skipOcr}&engine=${ocrEngineParam}&mode=${CURRENT_ENGINE_PRESET}`;
 
         const uploadResp = await fetch(uploadUrl, {
           method: "POST",
@@ -2218,7 +2218,7 @@ async function startLoadingPipeline() {
               await new Promise(r => setTimeout(r, 1000));
               pollSec++;
               try {
-                const pollResp = await fetch(`http://localhost:8000/api/ocr/job_status?job_id=${encodeURIComponent(jobId)}`);
+                const pollResp = await fetch(`/api/ocr/job_status?job_id=${encodeURIComponent(jobId)}`);
                 if (pollResp.ok) {
                   const pollData = await pollResp.json();
                   const elapsed = pollData.elapsed_sec || pollSec;
@@ -2282,7 +2282,7 @@ async function startLoadingPipeline() {
 
   appendLog("GRAPH", "Executing cross-source entity resolution across all ingested records...");
   try {
-    const corrResp = await fetch(`http://localhost:8000/api/correlations?case_id=${encodeURIComponent(caseId)}`);
+    const corrResp = await fetch(`/api/correlations?case_id=${encodeURIComponent(caseId)}`);
     if (corrResp.ok) {
       const corrData = await corrResp.json();
       const corrs = corrData.correlations || [];
@@ -2302,7 +2302,7 @@ async function startLoadingPipeline() {
 
   // Cross-case syndicate correlation
   try {
-    const xResp = await fetch(`http://localhost:8000/api/cross_case_matches?case_id=${encodeURIComponent(caseId)}`);
+    const xResp = await fetch(`/api/cross_case_matches?case_id=${encodeURIComponent(caseId)}`);
     if (xResp.ok) {
       const xData = await xResp.json();
       const xMatches = xData.matches || [];
@@ -2371,7 +2371,7 @@ async function loadInductedLexicon() {
   const list = document.getElementById("inducted-lexicon-list");
   if (!list) return;
   try {
-    const resp = await fetch("http://localhost:8000/api/slang_dictionary");
+    const resp = await fetch("/api/slang_dictionary");
     if (resp.ok) {
       const data = await resp.json();
       if (data.words && data.words.length > 0) {
@@ -2430,7 +2430,7 @@ function updateEvidenceViewerMode() {
       linesContainer.style.display = "none";
       if (toolbar) toolbar.style.display = "none";
       imgContainer.style.display = "block";
-      const imgSrc = `http://localhost:8000/api/evidence_image?file_id=${encodeURIComponent(file.file_id)}`;
+      const imgSrc = `/api/evidence_image?file_id=${encodeURIComponent(file.file_id)}`;
       if (imgEl) imgEl.src = imgSrc;
       if (dlLink) dlLink.href = imgSrc;
       if (metaSubtext) {
@@ -2846,7 +2846,7 @@ async function renderNetworkGraph() {
 
   try {
     const caseId = getActiveCaseId();
-    const resp = await fetch(`http://localhost:8000/api/graph?case_id=${encodeURIComponent(caseId)}`);
+    const resp = await fetch(`/api/graph?case_id=${encodeURIComponent(caseId)}`);
     if (resp.ok) {
       const data = await resp.json();
       // Filter out any drug keywords or slang so only true network entities appear
@@ -3227,7 +3227,7 @@ async function executeGlobalSearch() {
   // 2. Query live SQLite FTS5 search
   let liveHits = [];
   try {
-    const resp = await fetch(`http://localhost:8000/api/search?q=${encodeURIComponent(query)}&limit=10`);
+    const resp = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=10`);
     if (resp.ok) {
       const data = await resp.json();
       liveHits = data.results || [];
@@ -3777,7 +3777,7 @@ async function runWorkbenchCodewordInduction() {
   let candidateMessages = [];
   try {
     const caseId = getActiveCaseId();
-    let url = `http://localhost:8000/api/candidates?case_id=${encodeURIComponent(caseId)}`;
+    let url = `/api/candidates?case_id=${encodeURIComponent(caseId)}`;
     if (targetFileId && targetFileId !== "all") {
       url += `&file_id=${encodeURIComponent(targetFileId)}`;
     }

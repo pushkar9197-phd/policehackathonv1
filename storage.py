@@ -11,10 +11,20 @@ import re
 import csv
 import io
 import os
+import sys
 import urllib.request
 import urllib.parse
 from datetime import datetime
 from typing import Dict, List, Any, Tuple, Optional
+
+if sys.platform == "win32":
+    try:
+        if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "data", "case_evidence.db")
 
@@ -449,6 +459,14 @@ def parse_and_ingest_file(case_id: str, filename: str, content_bytes: bytes, db_
                     })
             except Exception as ocr_err:
                 print(f"[OCR ERROR] {ocr_err}")
+                file_type = "IMAGE_OCR_FAILED"
+                records_to_insert.append({
+                    "source_type": "SEIZED_SCREENSHOT_OCR_ERROR",
+                    "sender_id": "SEIZED_EXHIBIT",
+                    "timestamp": now_str,
+                    "raw_text": f"[OCR PROCESSING ERROR: {ocr_err}]",
+                    "line_number": 1
+                })
 
     # 1. Telegram & Darknet JSON Detect
     if not records_to_insert and (filename.endswith(".json") or '"messages"' in text_content[:500]):

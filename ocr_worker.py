@@ -16,43 +16,87 @@ import shutil
 import tempfile
 import subprocess
 import urllib.request
+import urllib.error
 from typing import Dict, List, Any, Optional, Tuple
 
+if sys.platform == "win32":
+    try:
+        if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DOTS_SERVER_PORTS = [8015, 8016]
+
 TESSERACT_CANDIDATE_PATHS = [
+    os.path.join(BASE_DIR, "tools", "tesseract", "tesseract.exe"),
+    os.path.join(BASE_DIR, "tesseract", "tesseract.exe"),
+    os.path.expandvars(r"%LOCALAPPDATA%\Programs\Tesseract-OCR\tesseract.exe"),
+    r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+    r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+    os.path.expandvars(r"%USERPROFILE%\scoop\apps\tesseract\current\tesseract.exe"),
+    r"C:\ProgramData\chocolatey\bin\tesseract.exe",
     "/opt/homebrew/bin/tesseract",
     "/usr/local/bin/tesseract",
     "/usr/bin/tesseract",
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe",
-    r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
-    os.path.expandvars(r"%LOCALAPPDATA%\Programs\Tesseract-OCR\tesseract.exe"),
 ]
 
+def get_tesseract_binary() -> Optional[str]:
+    """Finds the local Tesseract binary on the system."""
+    env_path = os.environ.get("TESSERACT_PATH")
+    if env_path and os.path.isfile(env_path):
+        return env_path
+
+    for p in TESSERACT_CANDIDATE_PATHS:
+        if os.path.isfile(p):
+            return p
+    for cmd in ["tesseract", "tesseract.exe"]:
+        which_path = shutil.which(cmd)
+        if which_path and os.path.isfile(which_path):
+            return which_path
+    return None
+
 LLAMA_MTMD_CLI_PATHS = [
+    r"D:\hackathon winners\llama server\llama-mtmd-cli.exe",
+    r"D:\hackathon winners\llama server\llama-cli.exe",
+    os.path.join(BASE_DIR, "tools", "llama", "llama-mtmd-cli.exe"),
     "/Users/darthinfinix/llama.cpp/build/bin/llama-mtmd-cli",
     os.path.expanduser("~/llama.cpp/build/bin/llama-mtmd-cli")
 ]
 
 DOTS_OCR_MODEL_PATHS = [
+    r"D:\hackathon winners\llama server\dots.ocr.Q4_K_M.gguf",
+    os.path.join(BASE_DIR, "tools", "llama", "dots.ocr.Q4_K_M.gguf"),
     "/Volumes/Offshore3/LlamaCpp/models/dotsocr4bit/dots.ocr.Q4_K_M.gguf"
 ]
 
 DOTS_OCR_MMPROJ_PATHS = [
+    r"D:\hackathon winners\llama server\dots.ocr.mmproj-Q8_0.gguf",
+    os.path.join(BASE_DIR, "tools", "llama", "dots.ocr.mmproj-Q8_0.gguf"),
     "/Volumes/Offshore3/LlamaCpp/models/dotsocr4bit/dots.ocr.mmproj-Q8_0.gguf"
 ]
 
-def get_tesseract_binary() -> Optional[str]:
-    """Finds the local Tesseract binary on the system."""
-    for p in TESSERACT_CANDIDATE_PATHS:
-        if os.path.isfile(p) and os.access(p, os.X_OK):
-            return p
-    which_path = shutil.which("tesseract")
-    if which_path and os.access(which_path, os.X_OK):
-        return which_path
-    return None
+def get_tesseract_env(tesseract_bin: Optional[str] = None) -> Dict[str, str]:
+    """Prepares execution environment with TESSDATA_PREFIX and PATH for DLLs."""
+    env = os.environ.copy()
+    if tesseract_bin:
+        tess_dir = os.path.dirname(os.path.abspath(tesseract_bin))
+        cand_tessdata = os.path.join(tess_dir, "tessdata")
+        if os.path.isdir(cand_tessdata) and not os.environ.get("TESSDATA_PREFIX"):
+            env["TESSDATA_PREFIX"] = cand_tessdata
+        if "PATH" in env:
+            env["PATH"] = f"{tess_dir}{os.pathsep}{env['PATH']}"
+        else:
+            env["PATH"] = tess_dir
+    return env
 
-def get_dots_ocr_config() -> Optional[Dict[str, str]]:
-    """Checks if dots.ocr HTTP endpoint (e.g. GPU laptop via Tailscale) or local binary/GGUF files are available."""
-    # 1. Check HTTP remote VLM endpoint (e.g. from Tailscale or local server)
+def get_dots_ocr_config() -> Optional[Dict[str, Any]]:
+    """Checks if dots.ocr HTTP endpoint (e.g. GPU laptop via Tailscale or local llama-server) or local binary/GGUF files are available."""
+    # 1. Check HTTP remote or local VLM endpoint
     ocr_url = os.environ.get("OCR_SERVER_URL") or os.environ.get("DOTS_OCR_URL")
     candidates = []
     if ocr_url:
@@ -61,16 +105,22 @@ def get_dots_ocr_config() -> Optional[Dict[str, str]]:
     candidates.append(f"http://{ocr_host}:8015")
     if ocr_host != "localhost":
         candidates.append("http://localhost:8015")
+    candidates.append("http://127.0.0.1:8015")
+    candidates.append("http://127.0.0.1:8016")
 
     for url in candidates:
         try:
             req = urllib.request.Request(f"{url}/v1/models")
             with urllib.request.urlopen(req, timeout=0.8) as resp:
                 if resp.status == 200:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    models = data.get("data", [])
+                    model_id = models[0].get("id", "dots.ocr (Neural VLM)") if models else "dots.ocr (Neural VLM)"
                     return {
+                        "mode": "http",
                         "type": "http",
                         "url": url,
-                        "model": f"dots.ocr (Remote GPU VLM Server @ {url})"
+                        "model": model_id
                     }
         except Exception:
             pass
@@ -78,12 +128,12 @@ def get_dots_ocr_config() -> Optional[Dict[str, str]]:
     # 2. Local CLI & GGUF fallback
     cli_bin = None
     for p in LLAMA_MTMD_CLI_PATHS:
-        if os.path.isfile(p) and os.access(p, os.X_OK):
+        if os.path.isfile(p):
             cli_bin = p
             break
     if not cli_bin:
-        which_bin = shutil.which("llama-mtmd-cli")
-        if which_bin and os.access(which_bin, os.X_OK):
+        which_bin = shutil.which("llama-mtmd-cli") or shutil.which("llama-mtmd-cli.exe")
+        if which_bin and os.path.isfile(which_bin):
             cli_bin = which_bin
 
     model_path = None
@@ -101,9 +151,11 @@ def get_dots_ocr_config() -> Optional[Dict[str, str]]:
     if cli_bin and model_path and mmproj_path:
         return {
             "type": "cli",
+            "mode": "cli",
             "cli": cli_bin,
             "model": model_path,
-            "mmproj": mmproj_path
+            "mmproj": mmproj_path,
+            "type": "llama-mtmd-cli (Local CLI)"
         }
     return None
 
@@ -255,76 +307,158 @@ def classify_screenshot_content(lines: List[Dict[str, Any]]) -> Tuple[str, str]:
 
     return "GENERAL_EVIDENCE_OCR", "SEIZED_SCREENSHOT"
 
-def run_dots_ocr(image_path: str, dots_cfg: Dict[str, str], timeout_sec: int = 45) -> Tuple[List[Dict[str, Any]], float]:
+def run_dots_ocr(image_path: str, dots_cfg: Dict[str, Any], timeout_sec: int = 45) -> Tuple[List[Dict[str, Any]], float]:
     """
-    Executes dots.ocr (Qwen2-1.7B ViT) via HTTP API (GPU server) or local llama-mtmd-cli.
-    Provides human-grade handwriting and mobile UI transcription.
+    Executes dots.ocr (Qwen2-1.7B ViT) via HTTP API (remote GPU or local llama-server) or local llama-mtmd-cli.
+    Provides human-grade handwriting, layout preservation, and mobile UI transcription.
     """
-    if dots_cfg.get("type") == "http":
+    if dots_cfg.get("type") == "http" or dots_cfg.get("mode") == "http":
         with open(image_path, "rb") as f:
             b64_img = base64.b64encode(f.read()).decode("utf-8")
 
-        ext = os.path.splitext(image_path)[1].lower().replace('.', '')
-        mime = f"image/{ext}" if ext in ["png", "jpeg", "jpg", "webp"] else "image/jpeg"
-        data_uri = f"data:{mime};base64,{b64_img}"
+        server_url = dots_cfg.get("url", "http://127.0.0.1:8015").rstrip('/')
 
-        payload = json.dumps({
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Extract all text."},
-                        {"type": "image_url", "image_url": {"url": data_uri}}
-                    ]
-                }
-            ],
-            "temperature": 0.0,
-            "max_tokens": 150,
-            "repeat_penalty": 1.35,
-            "logit_bias": {151673: -100, 151643: -100}
-        }).encode("utf-8")
+        # 1. First attempt modern /v1/chat/completions (Official multimodal chat API)
+        try:
+            payload = json.dumps({
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "Transcribe all visible text in this police evidence exhibit accurately. Preserve sender names, timestamps, rupee amounts, UPI IDs, account numbers, and phone numbers line by line."},
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_img}"}}
+                        ]
+                    }
+                ],
+                "temperature": 0.0,
+                "max_tokens": 512,
+                "repeat_penalty": 1.15
+            }).encode("utf-8")
 
-        req = urllib.request.Request(
-            f"{dots_cfg['url']}/v1/chat/completions",
-            data=payload,
-            headers={"Content-Type": "application/json"}
-        )
-        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            text_part = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            req = urllib.request.Request(
+                f"{server_url}/v1/chat/completions",
+                data=payload,
+                headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                text_part = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        except Exception:
+            # Fallback to /completion endpoint with layout prompt
+            media_marker = ""
+            try:
+                req_props = urllib.request.urlopen(f"{server_url}/props", timeout=1.0)
+                props = json.loads(req_props.read().decode("utf-8"))
+                media_marker = props.get("media_marker", "")
+            except Exception:
+                pass
+
+            prompt = (
+                f"<|user|>{media_marker}\n"
+                "Please output the layout information from the image, including each layout element's bbox, category, and text content.\n\n"
+                "Constraints: The output text must be the original text from the image without translation.\n\n"
+                "Final Output: A single JSON object or raw lines.<|assistant|>"
+            )
+            payload = json.dumps({
+                "prompt": prompt,
+                "image_data": [{"data": b64_img, "id": 1}],
+                "n_predict": 512,
+                "temperature": 0.1,
+                "stop": ["<|endofassistant|>", "<|endoftext|>"]
+            }).encode("utf-8")
+
+            req = urllib.request.Request(
+                f"{server_url}/completion",
+                data=payload,
+                headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                text_part = data.get("content", "").strip()
+
+        # Clean text
+        text_part = re.sub(r'<\|[^>]+\|>', '', text_part).strip()
+
+        # Parse JSON array if present
+        structured = []
+        try:
+            m = re.search(r'\[\s*\{.*\}\s*\]', text_part, re.DOTALL)
+            if m:
+                elements = json.loads(m.group(0))
+                for el in elements:
+                    txt = el.get("text", "").strip()
+                    if txt:
+                        structured.append({
+                            "line_number": len(structured) + 1,
+                            "raw_text": txt,
+                            "confidence": 96.5,
+                            "bbox": el.get("bbox")
+                        })
+        except Exception:
+            pass
+
+        if not structured:
+            raw_candidates = [l.strip() for l in text_part.splitlines() if l.strip()]
+            seen = set()
+            for l in raw_candidates:
+                l_clean = re.sub(r"^[#\*\_>\-]+\s*", "", l).strip()
+                if not l_clean or l_clean.startswith("<table") or l_clean.startswith("</") or l_clean.startswith("<td") or l_clean.startswith("<tr") or l_clean.startswith("<tbody") or l_clean.startswith("{") or l_clean.startswith("["):
+                    continue
+                if any(ign in l_clean.lower() for ign in ["i am sorry", "cannot recognize", "does not contain", "unable to detect"]):
+                    continue
+                if l_clean.lower() not in seen:
+                    seen.add(l_clean.lower())
+                    structured.append({
+                        "line_number": len(structured) + 1,
+                        "raw_text": l_clean,
+                        "confidence": 96.5,
+                        "bbox": None
+                    })
+
+        if not structured:
+            raise ValueError("dots.ocr produced no actionable text lines.")
+
+        return structured, 96.5
+
+    # CLI mode
+    cmd = [
+        dots_cfg["cli"],
+        "-m", dots_cfg["model"],
+        "--mmproj", dots_cfg["mmproj"],
+        "--image", image_path,
+        "-p", "OCR",
+        "-ngl", "99",
+        "-n", "1024",
+        "--temp", "0"
+    ]
+    sub_kwargs = {
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+        "text": True,
+        "encoding": "utf-8",
+        "errors": "replace",
+        "timeout": timeout_sec
+    }
+    if sys.platform == "win32":
+        sub_kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+
+    res = subprocess.run(cmd, **sub_kwargs)
+    raw_output = res.stdout
+
+    if "mtmd batch encoding done" in raw_output:
+        text_part = raw_output.split("mtmd batch encoding done", 1)[1]
+        if "\n\n" in text_part:
+            text_part = text_part.split("\n\n", 1)[1]
     else:
-        cmd = [
-            dots_cfg["cli"],
-            "-m", dots_cfg["model"],
-            "--mmproj", dots_cfg["mmproj"],
-            "--image", image_path,
-            "-p", "OCR",
-            "-ngl", "99",
-            "-n", "1024",
-            "--temp", "0"
-        ]
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout_sec)
-        raw_output = res.stdout
+        text_part = raw_output
 
-        # Find where model response starts (after mtmd batch encoding done)
-        if "mtmd batch encoding done" in raw_output:
-            text_part = raw_output.split("mtmd batch encoding done", 1)[1]
-            if "\n\n" in text_part:
-                text_part = text_part.split("\n\n", 1)[1]
-        else:
-            text_part = raw_output
-
-    # Clean up trailing assistant tokens and whitespace
     text_part = re.sub(r'<\|[^>]+\|>', '', text_part).strip()
-
     raw_candidates = [l.strip() for l in text_part.splitlines() if l.strip()]
     structured = []
     seen = set()
     for l in raw_candidates:
         l_clean = re.sub(r"^[#\*\_>\-]+\s*", "", l).strip()
-        if not l_clean or l_clean.startswith("<table") or l_clean.startswith("</") or l_clean.startswith("<td") or l_clean.startswith("<tr") or l_clean.startswith("<tbody"):
-            continue
-        if any(ign in l_clean.lower() for ign in ["i am sorry", "cannot recognize", "does not contain", "unable to detect"]):
+        if not l_clean:
             continue
         if l_clean.lower() not in seen:
             seen.add(l_clean.lower())
@@ -365,16 +499,28 @@ def process_image_bytes(image_bytes: bytes, filename: str, case_id: str = "FIR_1
 
         # 2. Local Air-Gapped Tesseract (Fallback or when light mode explicitly selected)
         if not lines and tesseract_bin:
+            tess_kwargs: Dict[str, Any] = {
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.PIPE,
+                "text": True,
+                "encoding": "utf-8",
+                "errors": "replace",
+                "timeout": 15,
+                "env": get_tesseract_env(tesseract_bin)
+            }
+            if sys.platform == "win32":
+                tess_kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+
             cmd = [tesseract_bin, tmp_path, "stdout", "-l", "eng", "--psm", "6", "tsv"]
-            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=15)
+            res = subprocess.run(cmd, **tess_kwargs)
             tsv_data = res.stdout
             if not tsv_data or len(tsv_data.strip()) < 10:
                 cmd = [tesseract_bin, tmp_path, "stdout", "-l", "eng", "tsv"]
-                res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=15)
+                res = subprocess.run(cmd, **tess_kwargs)
                 tsv_data = res.stdout
             lines, avg_conf = parse_tesseract_tsv(tsv_data)
             if lines and len(lines) > 0:
-                active_engine = "Tesseract 5.5 (Instant Air-Gapped)"
+                active_engine = "Tesseract 5.4/5.5 (Instant Air-Gapped)"
 
         # 3. If Tesseract was tried first (e.g. light mode) and found nothing, check dots.ocr
         if not lines and dots_cfg:

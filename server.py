@@ -15,7 +15,17 @@ import time
 import uuid
 import threading
 import hashlib
+import sys
 import storage
+
+if sys.platform == "win32":
+    try:
+        if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 PORT = 8000
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -85,6 +95,17 @@ class ForensicHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         params = urllib.parse.parse_qs(parsed.query)
+
+        # API: Service Health Check (used by startup scripts & monitoring)
+        if path == '/api/health':
+            self._set_json_headers(200)
+            self.wfile.write(json.dumps({
+                "status": "online",
+                "service": "chandigarh_police_forensic_server",
+                "version": "1.0",
+                "timestamp": int(time.time())
+            }).encode('utf-8'))
+            return
 
         # API: Full-Text Search
         if path == '/api/search':
@@ -210,7 +231,7 @@ class ForensicHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             dots_cfg = ocr_worker.get_dots_ocr_config()
             tess_bin = ocr_worker.get_tesseract_binary()
             
-            primary_engine = "dots.ocr (Qwen2-1.7B ViT Neural VLM)" if dots_cfg else "Tesseract 5.5.2 (Local Air-Gapped)"
+            primary_engine = "dots.ocr (Qwen2-1.7B ViT Neural VLM)" if dots_cfg else "Tesseract 5.4/5.5 (Instant Air-Gapped)"
             available = bool(dots_cfg or tess_bin)
 
             self._set_json_headers(200)
@@ -219,6 +240,8 @@ class ForensicHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "primary_engine": primary_engine,
                 "dots_ocr": bool(dots_cfg),
                 "dots_model": dots_cfg["model"] if dots_cfg else None,
+                "dots_url": dots_cfg.get("url") if dots_cfg else None,
+                "dots_mode": dots_cfg.get("mode") if dots_cfg else None,
                 "tesseract": bool(tess_bin),
                 "tesseract_path": tess_bin,
                 "supported_formats": ["png", "jpg", "jpeg", "webp", "bmp", "tiff"],

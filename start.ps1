@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Chandigarh Police Cyber Crime Investigation Platform (PS3-DWID)
     Air-Gapped Windows / PowerShell Startup & Dependency Verification Script
@@ -25,8 +25,7 @@ Write-Host "🔒 Section 63(4) BSA Compliant Forensic Triage & Offline SLM" -For
 Write-Host "=================================================================" -ForegroundColor Cyan
 Write-Host ""
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-if (-not $ScriptDir) { $ScriptDir = Get-Location }
+$ScriptDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { (Get-Location).Path }
 Set-Location $ScriptDir
 
 # Ensure logs directory exists
@@ -36,38 +35,45 @@ if (-not (Test-Path "logs")) {
 
 $AllDepsMet = $true
 
+# Force UTF-8 environment for Python child processes on Windows
+$env:PYTHONIOENCODING = "utf-8"
+$env:PYTHONUTF8 = "1"
+
 # -----------------------------------------------------------------------------
 # 1. Dependency Check: Python & Virtual Environment
 # -----------------------------------------------------------------------------
 Write-Host "🔍 [1/4] Checking Python Environment..." -ForegroundColor Yellow
 
-$PythonCmd = $null
+$PythonBin = $null
+$PythonArgs = @()
+
 if (Test-Path "$ScriptDir\.venv\Scripts\python.exe") {
-    $PythonCmd = "$ScriptDir\.venv\Scripts\python.exe"
-    Write-Host "   ✓ Using local virtualenv Python: $PythonCmd" -ForegroundColor Green
+    $PythonBin = "$ScriptDir\.venv\Scripts\python.exe"
+    Write-Host "   ✓ Using local virtualenv Python: $PythonBin" -ForegroundColor Green
 } elseif (Test-Path "$ScriptDir\venv\Scripts\python.exe") {
-    $PythonCmd = "$ScriptDir\venv\Scripts\python.exe"
-    Write-Host "   ✓ Using local virtualenv Python: $PythonCmd" -ForegroundColor Green
-} elseif (Get-Command python -ErrorAction SilentlyContinue) {
-    $PythonCmd = "python"
-} elseif (Get-Command py -ErrorAction SilentlyContinue) {
-    $PythonCmd = "py -3"
-} elseif (Get-Command python3 -ErrorAction SilentlyContinue) {
-    $PythonCmd = "python3"
+    $PythonBin = "$ScriptDir\venv\Scripts\python.exe"
+    Write-Host "   ✓ Using local virtualenv Python: $PythonBin" -ForegroundColor Green
+} elseif ($p = Get-Command python -ErrorAction SilentlyContinue) {
+    $PythonBin = $p.Source
+} elseif ($p = Get-Command py -ErrorAction SilentlyContinue) {
+    $PythonBin = $p.Source
+    $PythonArgs = @("-3")
+} elseif ($p = Get-Command python3 -ErrorAction SilentlyContinue) {
+    $PythonBin = $p.Source
 }
 
-if (-not $PythonCmd) {
+if (-not $PythonBin) {
     Write-Host "   ❌ CRITICAL: Python 3 was not found in PATH or virtual environments!" -ForegroundColor Red
-    Write-Host "      Please install Python 3.9+ from https://www.python.org/downloads/ (check 'Add Python to PATH')" -ForegroundColor Red
+    Write-Host "      Please install Python 3.9+ from https://www.python.org/downloads/ (check Add Python to PATH)" -ForegroundColor Red
     $AllDepsMet = $false
 } else {
     try {
-        $pyVer = & $PythonCmd --version 2>&1
-        Write-Host "   ✓ Detected: $pyVer" -ForegroundColor Green
+        $pyVer = & $PythonBin @PythonArgs --version 2>&1
+        Write-Host "   ✓ Detected: $pyVer ($PythonBin)" -ForegroundColor Green
 
         # Verify SQLite3 availability
-        $sqlCheck = & $PythonCmd -c "import sqlite3; print('SQLITE_OK')" 2>&1
-        if ($sqlCheck -match "SQLITE_OK") {
+        $sqlCheck = & $PythonBin @PythonArgs -c "import sqlite3; print(1)" 2>&1
+        if ($sqlCheck -match "1") {
             Write-Host "   ✓ SQLite3 module: Available & Functional" -ForegroundColor Green
         } else {
             Write-Host "   ⚠️  SQLite3 module verification warning: $sqlCheck" -ForegroundColor Yellow
@@ -83,35 +89,50 @@ if (-not $PythonCmd) {
 # -----------------------------------------------------------------------------
 Write-Host "`n🔍 [2/4] Checking Tesseract OCR Engine..." -ForegroundColor Yellow
 
+$Candidates = @(
+    "$ScriptDir\tools\tesseract\tesseract.exe",
+    "$ScriptDir\tesseract\tesseract.exe",
+    "$env:LOCALAPPDATA\Programs\Tesseract-OCR\tesseract.exe",
+    "C:\Program Files\Tesseract-OCR\tesseract.exe",
+    "C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+    "$env:USERPROFILE\scoop\apps\tesseract\current\tesseract.exe",
+    "C:\ProgramData\chocolatey\bin\tesseract.exe"
+)
+
 $TesseractBin = $null
-if (Get-Command tesseract -ErrorAction SilentlyContinue) {
-    $TesseractBin = "tesseract"
-} else {
-    $Candidates = @(
-        "C:\Program Files\Tesseract-OCR\tesseract.exe",
-        "C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
-        "$env:LOCALAPPDATA\Programs\Tesseract-OCR\tesseract.exe"
-    )
-    foreach ($c in $Candidates) {
-        if (Test-Path $c) {
-            $TesseractBin = $c
-            # Add containing folder to PATH for child processes
-            $tDir = Split-Path -Parent $c
-            $env:PATH = "$tDir;$env:PATH"
-            break
-        }
+foreach ($c in $Candidates) {
+    if (Test-Path $c) {
+        $TesseractBin = $c
+        break
+    }
+}
+
+if (-not $TesseractBin) {
+    $whichTess = Get-Command tesseract, tesseract.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($whichTess) {
+        $TesseractBin = $whichTess.Source
     }
 }
 
 if ($TesseractBin) {
+    $tDir = Split-Path -Parent $TesseractBin
+    if ($env:PATH -notmatch [regex]::Escape($tDir)) {
+        $env:PATH = "$tDir;$env:PATH"
+    }
+    $tessdataDir = Join-Path $tDir "tessdata"
+    if (Test-Path $tessdataDir) {
+        $env:TESSDATA_PREFIX = $tessdataDir
+    }
+
     try {
         $tVer = (& $TesseractBin --version 2>&1)[0]
-        Write-Host "   ✓ Detected: $tVer ($TesseractBin)" -ForegroundColor Green
+        Write-Host "   ✓ Detected: $tVer" -ForegroundColor Green
+        Write-Host "   ✓ Binary Location: $TesseractBin" -ForegroundColor Green
     } catch {
         Write-Host "   ✓ Tesseract found at $TesseractBin" -ForegroundColor Green
     }
 } else {
-    Write-Host "   ℹ️  Tesseract binary not found in standard paths." -ForegroundColor DarkYellow
+    Write-Host "   ⚠️  Tesseract binary not found in standard paths." -ForegroundColor Yellow
     Write-Host "      Tesseract installer: https://github.com/UB-Mannheim/tesseract/wiki" -ForegroundColor DarkGray
     Write-Host "      (System will still operate using plain text, CSV, and remote/dots.ocr)" -ForegroundColor DarkGray
 }
@@ -121,21 +142,15 @@ if ($TesseractBin) {
 # -----------------------------------------------------------------------------
 Write-Host "`n🔍 [3/4] Probing Offline Neural Model Servers..." -ForegroundColor Yellow
 
-# Helper function to query local llama endpoints
 function Test-ModelEndpoint {
     param([string]$Url, [string]$Label, [int]$Port)
     try {
-        $req = [System.Net.WebRequest]::Create($Url)
-        $req.Timeout = 1500
-        $resp = $req.GetResponse()
-        $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
-        $content = $reader.ReadToEnd()
-        $reader.Close()
-        $resp.Close()
-
+        $resp = Invoke-RestMethod -Uri $Url -TimeoutSec 2 -ErrorAction Stop
         $modelId = "Active Model"
-        if ($content -match '"id":\s*"([^"]+)"') {
-            $modelId = $matches[1]
+        if ($resp.data -and $resp.data.Count -gt 0 -and $resp.data[0].id) {
+            $modelId = $resp.data[0].id
+        } elseif ($resp.id) {
+            $modelId = $resp.id
         }
         return @{ Online = $true; Model = $modelId; Error = $null }
     } catch {
@@ -168,7 +183,7 @@ if ($dotsResult.Online) {
 # -----------------------------------------------------------------------------
 Write-Host "`n🚀 [4/4] Starting Forensic Web Workbench..." -ForegroundColor Yellow
 
-if (-not $PythonCmd) {
+if (-not $PythonBin) {
     Write-Host "❌ Cannot start server: Python is missing. Aborting." -ForegroundColor Red
     exit 1
 }
@@ -189,36 +204,43 @@ if ($portOccupied) {
     Write-Host "   ✓ Forensic Web Server is already active on http://localhost:$WebPort" -ForegroundColor Green
 } else {
     Write-Host "   🌐 Starting server.py on http://127.0.0.1:$WebPort..." -ForegroundColor Cyan
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $PythonCmd
-    $psi.Arguments = "server.py"
-    $psi.WorkingDirectory = $ScriptDir
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.UseShellExecute = $false
-    $psi.CreateNoWindow = $true
 
-    $ServerProcess = [System.Diagnostics.Process]::Start($psi)
+    $serverArgs = @()
+    if ($PythonArgs) { $serverArgs += $PythonArgs }
+    $serverArgs += "server.py"
 
-    # Log reader background script
-    $logStream = [System.IO.File]::AppendText("$ScriptDir\logs\web_server.log")
-    $logStream.WriteLine("=== Server started at $(Get-Date) (PID: $($ServerProcess.Id)) ===")
-    $logStream.Close()
+    $stdoutPath = Join-Path $ScriptDir "logs\web_server.log"
+    $stderrPath = Join-Path $ScriptDir "logs\web_server_err.log"
+    $logHeader = "`n=== Server started at $(Get-Date) ==="
+    Add-Content -Path $stdoutPath -Value $logHeader
+    Add-Content -Path $stderrPath -Value $logHeader
+
+    $ServerProcess = Start-Process -FilePath $PythonBin `
+        -ArgumentList $serverArgs `
+        -WorkingDirectory $ScriptDir `
+        -RedirectStandardOutput $stdoutPath `
+        -RedirectStandardError $stderrPath `
+        -PassThru `
+        -NoNewWindow
+
+    if (-not $ServerProcess) {
+        Write-Host "   ❌ Failed to spawn server process." -ForegroundColor Red
+        exit 1
+    }
 
     Write-Host "   ✓ Web Server process spawned (PID: $($ServerProcess.Id)) -> logs/web_server.log" -ForegroundColor Green
 
-    # Wait up to 12s for readiness
+    # Wait up to 12s for readiness via /api/health
     Write-Host "   ⏳ Waiting for service readiness..." -NoNewline
     $ready = $false
-    for ($i = 0; $i -lt 12; $i++) {
-        Start-Sleep -Milliseconds 800
+    for ($i = 0; $i -lt 15; $i++) {
+        Start-Sleep -Milliseconds 600
         try {
-            $testReq = [System.Net.WebRequest]::Create("http://127.0.0.1:$WebPort/api/health")
-            $testReq.Timeout = 800
-            $testResp = $testReq.GetResponse()
-            $testResp.Close()
-            $ready = $true
-            break
+            $resp = Invoke-RestMethod -Uri "http://127.0.0.1:$WebPort/api/health" -TimeoutSec 1 -ErrorAction Stop
+            if ($resp.status -eq "online") {
+                $ready = $true
+                break
+            }
         } catch {
             Write-Host "." -NoNewline
         }
@@ -243,8 +265,15 @@ Write-Host ""
 Write-Host "=================================================================" -ForegroundColor Green
 Write-Host "🟢 CHANDIGARH POLICE FORENSIC BENCHMARK OPERATIONAL" -ForegroundColor Green
 Write-Host "   • Web Dashboard:     $WebUrl" -ForegroundColor White
-Write-Host "   • LiquidAI (SLM):    http://localhost:$LiquidPort $(if ($liquidResult.Online) {'[ONLINE]'} else {'[OFFLINE]'})" -ForegroundColor $(if ($liquidResult.Online) {'Green'} else {'DarkYellow'})
-Write-Host "   • dots.ocr (VLM):    http://localhost:$DotsPort $(if ($dotsResult.Online) {'[ONLINE]'} else {'[STANDBY]'})" -ForegroundColor $(if ($dotsResult.Online) {'Green'} else {'DarkCyan'})
+
+$liquidLabel = if ($liquidResult.Online) { "[ONLINE]" } else { "[OFFLINE]" }
+$liquidColor = if ($liquidResult.Online) { "Green" } else { "DarkYellow" }
+Write-Host "   • LiquidAI (SLM):    http://localhost:$LiquidPort $liquidLabel" -ForegroundColor $liquidColor
+
+$dotsLabel = if ($dotsResult.Online) { "[ONLINE]" } else { "[STANDBY]" }
+$dotsColor = if ($dotsResult.Online) { "Green" } else { "DarkCyan" }
+Write-Host "   • dots.ocr (VLM):    http://localhost:$DotsPort $dotsLabel" -ForegroundColor $dotsColor
+
 Write-Host "   • Logs:              Get-Content logs\web_server.log -Wait" -ForegroundColor DarkGray
 Write-Host "=================================================================" -ForegroundColor Green
 Write-Host "Press Ctrl+C to terminate the forensic server process.`n" -ForegroundColor Yellow
