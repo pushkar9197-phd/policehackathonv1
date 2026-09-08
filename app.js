@@ -67,7 +67,7 @@ function renderSavedCasesDropdown() {
 
   SAVED_CASES.forEach(c => {
     const isSelected = c.case_id === CASE_METADATA.case_id ? "selected" : "";
-    optionsHtml += `<option value="${escapeHtml(c.case_id)}" ${isSelected}>${escapeHtml(c.fir_number)} &bull; ${escapeHtml(c.police_station)} (${c.total_files} files, ${c.total_records} records)</option>`;
+    optionsHtml += `<option value="${escapeHtml(c.case_id)}" ${isSelected}>${escapeHtml(c.fir_number)}  •  ${escapeHtml(c.police_station)} (${c.total_files} files, ${c.total_records} records)</option>`;
     headerOptionsHtml += `<option value="${escapeHtml(c.case_id)}" ${isSelected}>${escapeHtml(c.fir_number)} (${c.total_files} exhibits)</option>`;
   });
 
@@ -269,7 +269,7 @@ function renderCrossCaseBanner() {
         <span class="mono font-bold" style="color: #fca5a5;">${escapeHtml(m.entity_value)}</span>
         <span class="badge badge-sm badge-neutral" style="margin-left: 6px; font-size: 9.5px;">${escapeHtml(m.entity_type)}</span>
         <div class="text-muted" style="font-size: 10px; margin-top: 2px;">
-          Linked Case: <strong style="color: #f1f5f9;">${escapeHtml(m.matched_fir)}</strong> (${escapeHtml(m.matched_ps)}) &bull; IO: ${escapeHtml(m.matched_io || 'Examiner')}
+          Linked Case: <strong style="color: #f1f5f9;">${escapeHtml(m.matched_fir)}</strong> (${escapeHtml(m.matched_ps)})  •  IO: ${escapeHtml(m.matched_io || 'Examiner')}
         </div>
       </div>
       <span class="badge badge-sm badge-red" style="font-size: 9px;">99% RISK HIT</span>
@@ -299,7 +299,7 @@ function renderCrossCaseDossier() {
     <ul style="padding-left: 18px; margin-bottom: 8px;">
       ${CROSS_CASE_MATCHES.map(m => `
         <li style="margin-bottom: 4px;">
-          <strong>${escapeHtml(m.entity_value)}</strong> (${escapeHtml(m.entity_type)}) &bull; Identified in <strong>${escapeHtml(m.matched_fir)}</strong>
+          <strong>${escapeHtml(m.entity_value)}</strong> (${escapeHtml(m.entity_type)})  •  Identified in <strong>${escapeHtml(m.matched_fir)}</strong>
         </li>
       `).join("")}
     </ul>
@@ -495,7 +495,7 @@ function renderProfilesGrid() {
             <div class="profile-card-avatar">${avatar}</div>
             <div>
               <div class="profile-card-name">${escapeHtml(o.name)}</div>
-              <div class="profile-card-rank">${escapeHtml(o.rank || "Officer")} &bull; <span class="mono">${escapeHtml(o.belt || "")}</span></div>
+              <div class="profile-card-rank">${escapeHtml(o.rank || "Officer")}  •  <span class="mono">${escapeHtml(o.belt || "")}</span></div>
             </div>
           </div>
           <div style="margin-bottom: 8px;">
@@ -619,7 +619,7 @@ function openShareCaseModal(caseId) {
       const isAssigned = (o.officer_id === caseObj.assigned_officer_id);
       if (!isAssigned) {
         const roleLabel = o.role === "EXAMINER" ? "Forensic Examiner" : (o.role === "SHO" ? "Supervisory SHO" : "Investigating Officer");
-        opts += `<option value="${escapeHtml(o.officer_id)}">${escapeHtml(o.name)} (${escapeHtml(o.rank)}) &bull; ${escapeHtml(roleLabel)} &bull; ${escapeHtml(o.station)}</option>`;
+        opts += `<option value="${escapeHtml(o.officer_id)}">${escapeHtml(o.name)} (${escapeHtml(o.rank)})  •  ${escapeHtml(roleLabel)}  •  ${escapeHtml(o.station)}</option>`;
       }
     });
     selectOfficer.innerHTML = opts || `<option value="">No other officers registered</option>`;
@@ -934,6 +934,32 @@ async function quickLoadDemoCase(caseId, type) {
   }
 }
 
+function updateWorkflowRibbon(stepNum) {
+  document.querySelectorAll('.workflow-ribbon-step').forEach(node => {
+    const s = parseInt(node.getAttribute('data-step') || '0', 10);
+    node.classList.remove('active', 'completed');
+    if (s === stepNum) node.classList.add('active');
+    else if (s < stepNum) node.classList.add('completed');
+  });
+  document.querySelectorAll('.ribbon-connector').forEach(conn => {
+    const s = parseInt(conn.getAttribute('data-connector') || '0', 10);
+    conn.classList.toggle('completed', s < stepNum);
+  });
+}
+
+function syncIntakeOfficerCard() {
+  const dispName = document.getElementById('intake-display-officer-name');
+  const dispRank = document.getElementById('intake-display-officer-rank');
+  const dispStation = document.getElementById('intake-display-officer-station');
+  const dispBelt = document.getElementById('intake-display-officer-belt');
+  if (typeof ACTIVE_OFFICER !== "undefined" && ACTIVE_OFFICER) {
+    if (dispName) dispName.textContent = ACTIVE_OFFICER.name;
+    if (dispRank) dispRank.textContent = ACTIVE_OFFICER.rank || "Inspector of Police";
+    if (dispBelt) dispBelt.textContent = ACTIVE_OFFICER.belt || "Belt #788-UT";
+    if (dispStation) dispStation.textContent = ACTIVE_OFFICER.station || "PS Cyber Crime, Sector 17, Chandigarh";
+  }
+}
+
 function goToStep(stepNum) {
   document.querySelectorAll('.wizard-screen').forEach(s => s.style.display = 'none');
   const dash = document.getElementById('screen-dashboard');
@@ -948,6 +974,8 @@ function goToStep(stepNum) {
     else if (idx + 1 < stepNum) node.classList.add('completed');
   });
 
+  updateWorkflowRibbon(stepNum);
+
   const navDocket = document.getElementById('nav-btn-docket');
   const navWb = document.getElementById('nav-btn-workbench');
 
@@ -955,6 +983,8 @@ function goToStep(stepNum) {
     document.getElementById('screen-intake').style.display = 'flex';
     if (navDocket) navDocket.classList.remove('active');
     if (navWb) navWb.classList.remove('active');
+
+    syncIntakeOfficerCard();
 
     const ioInput = document.getElementById('intake-io');
     const beltInput = document.getElementById('intake-belt');
@@ -999,6 +1029,23 @@ function autofillCaseDetails() {
   document.getElementById('intake-sections').value = "NDPS Act Sec 21, 22, 29 / IT Act Sec 66D / BNS Sec 318";
   document.getElementById('intake-category').value = "NDPS_CYBER";
   showToast("⚡ Autofilled official Chandigarh Police Case Details!", "success");
+}
+
+function autofillAdversarialCase() {
+  CASE_METADATA.case_id = "FIR_999_ADVERSARIAL";
+  const firInput = document.getElementById('intake-fir');
+  const psInput = document.getElementById('intake-ps');
+  const ioInput = document.getElementById('intake-io');
+  const beltInput = document.getElementById('intake-belt');
+  const secInput = document.getElementById('intake-sections');
+  const catInput = document.getElementById('intake-category');
+  if (firInput) firInput.value = "FIR No. 999/2026/INQUEST";
+  if (psInput) psInput.value = "PS Special Cell, Cyber Division, Chandigarh";
+  if (ioInput) ioInput.value = "Insp. Harpreet Singh";
+  if (beltInput) beltInput.value = "Belt #412-UT";
+  if (secInput) secInput.value = "NDPS Act Sec 21(c), 27A, 29 / BNS Sec 111 (Organised Crime)";
+  if (catInput) catInput.value = "NDPS_CYBER";
+  showToast("⚠️ Loaded Inquest / Complex Adversarial Template (FIR-999)!", "info");
 }
 
 async function proceedToStep2() {
@@ -1905,7 +1952,7 @@ async function checkOcrServerStatus() {
         if (summary) {
           const tPath = data.tesseract_path ? "Local CLI" : "Offline";
           const dotsStatus = data.dots_ocr ? "Available (Apple M4 Neural ViT)" : "Standard Mode";
-          summary.innerHTML = `<strong>Tesseract 5.5:</strong> Active (${tPath}) &bull; <strong>Neural OCR:</strong> ${dotsStatus}`;
+          summary.innerHTML = `<strong>Tesseract 5.5:</strong> Active (${tPath})  •  <strong>Neural OCR:</strong> ${dotsStatus}`;
         }
         showToast("✓ OCR Engines verified: Tesseract 5.5 CLI & dots.ocr Neural ViT available", "success");
         if (btn) {
@@ -2881,7 +2928,7 @@ async function renderNetworkGraph() {
 
       if (badge) {
         badge.className = "badge badge-sm badge-blue";
-        badge.textContent = `${rawNodes.length} Nodes &bull; ${edges.length} Corroborated Links`;
+        badge.textContent = `${rawNodes.length} Nodes  •  ${edges.length} Corroborated Links`;
       }
       if (legendBox) legendBox.style.opacity = "1";
 
@@ -3251,7 +3298,7 @@ async function executeGlobalSearch() {
   if (liveHits.length > 0) {
     html += `
       <div style="font-size: 11px; font-weight: bold; color: #1d4ed8; margin: 8px 0 4px 0; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">
-        ⚡ LIVE EVIDENCE CORPUS MATCHES (FTS5 INDEXED) &bull; ${liveHits.length} HITS
+        ⚡ LIVE EVIDENCE CORPUS MATCHES (FTS5 INDEXED)  •  ${liveHits.length} HITS
       </div>
     `;
     html += liveHits.map(hit => `
@@ -3264,7 +3311,7 @@ async function executeGlobalSearch() {
           ${escapeHtml(hit.raw_text.substring(0, 180))}...
         </div>
         <div class="text-xs text-muted">
-          <strong>Sender:</strong> ${escapeHtml(hit.sender_id)} &bull; <strong>Flags:</strong> ${escapeHtml(hit.flag_reasons || "None")}
+          <strong>Sender:</strong> ${escapeHtml(hit.sender_id)}  •  <strong>Flags:</strong> ${escapeHtml(hit.flag_reasons || "None")}
         </div>
       </div>
     `).join("");
@@ -3274,7 +3321,7 @@ async function executeGlobalSearch() {
   if (historicalHits.length > 0) {
     html += `
       <div style="font-size: 11px; font-weight: bold; color: #b91c1c; margin: 12px 0 4px 0; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">
-        ⚠️ CROSS-CASE PRECINCT MATCHES (HISTORICAL INTEL) &bull; ${historicalHits.length} HITS
+        ⚠️ CROSS-CASE PRECINCT MATCHES (HISTORICAL INTEL)  •  ${historicalHits.length} HITS
       </div>
     `;
     html += historicalHits.map(hit => `
@@ -3287,7 +3334,7 @@ async function executeGlobalSearch() {
           <strong>Linked Case:</strong> <span class="mono font-bold">${escapeHtml(hit.fir || "FIR No. 72/2025/CYBER")}</span> (${escapeHtml(hit.ps || "PS Cyber Crime, Sector 17")})
         </div>
         <div class="text-xs text-muted">
-          <strong>Role:</strong> ${escapeHtml(hit.role || "Target / Person of Interest")} &bull; <em>${escapeHtml(hit.notes || "Corroborated in historical precinct intelligence records.")}</em> (Dated: ${escapeHtml(hit.date || "14-Nov-2025")})
+          <strong>Role:</strong> ${escapeHtml(hit.role || "Target / Person of Interest")}  •  <em>${escapeHtml(hit.notes || "Corroborated in historical precinct intelligence records.")}</em> (Dated: ${escapeHtml(hit.date || "14-Nov-2025")})
         </div>
       </div>
     `).join("");
@@ -3624,7 +3671,7 @@ async function testCustomCodewordMessage() {
           <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 10px 12px; margin-top: 6px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <span class="badge badge-sm badge-green font-bold">🚨 DISGUISED CONTRABAND SLANG IDENTIFIED</span>
-              <span class="mono text-xs" style="color: var(--text-muted);">${latency} ms &bull; ${speed} tps &bull; ${escapeHtml(data.model || 'LFM2.5')}</span>
+              <span class="mono text-xs" style="color: var(--text-muted);">${latency} ms  •  ${speed} tps  •  ${escapeHtml(data.model || 'LFM2.5')}</span>
             </div>
             <div style="font-size: 13px; font-weight: 700; color: var(--gov-navy); margin-bottom: 6px;">
               Disguised Contraband Slang: <span style="color: var(--accent-blue); text-decoration: underline;">"${cw}"</span>
@@ -3645,7 +3692,7 @@ async function testCustomCodewordMessage() {
           <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 12px; margin-top: 6px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
               <span class="badge badge-sm badge-neutral font-bold">✓ SCREENED CLEAN: NO CONTRABAND SLANG</span>
-              <span class="mono text-xs" style="color: var(--text-muted);">${latency} ms &bull; ${speed} tps</span>
+              <span class="mono text-xs" style="color: var(--text-muted);">${latency} ms  •  ${speed} tps</span>
             </div>
             <div style="font-size: 11.5px; color: var(--text-secondary);">
               The SLM evaluated this line against narcotics patterns and verified it as routine legitimate communication. No evasive code word detected.
@@ -3745,7 +3792,7 @@ async function runWorkbenchCodewordInduction() {
       </div>
 
       <div class="terminal-console" id="wb-terminal-console">
-        <div class="terminal-line"><span class="terminal-ts">[SYS]</span> <span class="terminal-msg" style="color: #38bdf8;">Forensic SLM Engine Online &bull; Target Port: 8012 &bull; T=0.0</span></div>
+        <div class="terminal-line"><span class="terminal-ts">[SYS]</span> <span class="terminal-msg" style="color: #38bdf8;">Forensic SLM Engine Online  •  Target Port: 8012  •  T=0.0</span></div>
       </div>
     </div>
 
@@ -3907,7 +3954,7 @@ function renderSingleWorkbenchCard(c) {
     <div class="induction-card fade-in-slide-up" id="wb-card-${c.id}" style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 12px; margin-bottom: 10px;">
       <div style="font-size: 10.5px; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; padding-bottom: 5px;">
         <span>📁 <strong>Exhibit Source:</strong> <span class="mono" style="color: #f1f5f9;">${escapeHtml(fileName)}</span></span>
-        <span class="mono" style="color: #94a3b8;">Line #${c.lineNum} &bull; ${escapeHtml(c.sender)}</span>
+        <span class="mono" style="color: #94a3b8;">Line #${c.lineNum}  •  ${escapeHtml(c.sender)}</span>
       </div>
 
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">

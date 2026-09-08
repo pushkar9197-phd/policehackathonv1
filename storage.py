@@ -1342,7 +1342,7 @@ def get_dynamic_triage_leads(case_id: Optional[str] = None, db_path: str = DB_PA
         confidence_val = "99%" if cross_case_hit else f"{min(99, row['risk_score'] + 15)}%"
         corrob_basis = f"Detected in {row['filename']} (Line #{row['line_number']})"
         if cross_case_hit:
-            corrob_basis += f" &bull; ⚠️ Linked to past case {cross_case_hit['matchedFir']} ({cross_case_hit['matchedIo']})"
+            corrob_basis += f" • ⚠️ Linked to past case {cross_case_hit['matchedFir']} ({cross_case_hit['matchedIo']})"
 
         leads.append({
             "id": f"lead-{row['entity_id']}",
