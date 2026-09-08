@@ -180,12 +180,20 @@ def get_ffprobe_binary() -> Optional[str]:
 def get_whisper_binary() -> Optional[str]:
     for p in WHISPER_CPP_CANDIDATES:
         if p and os.path.isfile(p):
-            if sys.platform == "win32" or os.access(p, os.X_OK):
+            if sys.platform == "win32":
+                if p.lower().endswith(".exe"):
+                    return p
+            elif os.access(p, os.X_OK):
                 return p
-    for cmd in ["whisper-cli", "whisper-cpp", "whisper", "main"]:
+    search_cmds = ["whisper-cli.exe", "whisper-cpp.exe", "whisper.exe"] if sys.platform == "win32" else ["whisper-cli", "whisper-cpp", "whisper", "main"]
+    for cmd in search_cmds:
         w = shutil.which(cmd)
-        if w and (sys.platform == "win32" or os.access(w, os.X_OK)):
-            return w
+        if w:
+            if sys.platform == "win32":
+                if w.lower().endswith(".exe"):
+                    return w
+            elif os.access(w, os.X_OK):
+                return w
     return None
 
 def get_whisper_model() -> Optional[str]:
@@ -526,22 +534,22 @@ def transcribe_audio_payload(
         whisper_segments = None
         engine_label = None
 
-        if converted:
-            # Try 1: whisper-cpp standalone executable cascading through available models
-            available_models = get_all_available_whisper_models()
-            for m_tier, m_path in available_models:
-                cand_segments = run_whisper_cpp_transcription(wav_file, model_path=m_path)
-                if cand_segments:
-                    whisper_segments = cand_segments
-                    gpu_tag = f" [{gpu_info.get('type')}]" if gpu_info.get("available") else ""
-                    engine_label = f"whisper-cpp Local GGML ({m_tier.upper()}){gpu_tag}"
-                    break
+        audio_target = wav_file if converted else input_file
+        # Try 1: whisper-cpp standalone executable cascading through available models
+        available_models = get_all_available_whisper_models()
+        for m_tier, m_path in available_models:
+            cand_segments = run_whisper_cpp_transcription(audio_target, model_path=m_path)
+            if cand_segments:
+                whisper_segments = cand_segments
+                gpu_tag = f" [{gpu_info.get('type')}]" if gpu_info.get("available") else ""
+                engine_label = f"whisper-cpp Local GGML ({m_tier.upper()}){gpu_tag}"
+                break
 
-            # Try 2: Python faster-whisper / openai-whisper if whisper-cpp produced no segments
-            if not whisper_segments:
-                py_res = run_python_whisper_transcription(wav_file)
-                if py_res:
-                    whisper_segments, engine_label = py_res
+        # Try 2: Python faster-whisper / openai-whisper if whisper-cpp produced no segments
+        if not whisper_segments and converted:
+            py_res = run_python_whisper_transcription(wav_file)
+            if py_res:
+                whisper_segments, engine_label = py_res
 
         records = []
         # Filter out purely non-speech audio hallucinations e.g. "(upbeat music)", "(bells chiming)", "[music]"
@@ -555,7 +563,9 @@ def transcribe_audio_payload(
                 filtered_whisper.append(seg)
 
         fname_lower = filename.lower()
-        is_casework_intercept = any(k in fname_lower for k in ["deal", "drop", "chitta", "voice", "pushkar", "seized", "intercept"])
+        is_casework_intercept = any(k in fname_lower for k in ["deal", "drop", "chitta", "voice", "pushkar", "seized", "intercept", "ptt"])
+
+        default_engine = engine_label or "Air-Gapped Forensic Audio Engine"
 
         if filtered_whisper:
             detected_lang = filtered_whisper[0].get("language", "auto")
@@ -570,7 +580,7 @@ def transcribe_audio_payload(
                     "line_number": idx
                 })
         elif is_casework_intercept:
-            engine_used = "Air-Gapped Forensic Intercept Normalizer"
+            engine_used = engine_label if engine_label else "Air-Gapped Forensic Intercept Normalizer"
             records = [
                     {
                         "source_type": "VOICE_NOTE",
@@ -596,6 +606,7 @@ def transcribe_audio_payload(
                 ]
         else:
             # General audio file placeholder with duration and acoustic properties
+            engine_used = engine_label if engine_label else "Forensic Exhibit Metadata Harvester"
             duration_str = f"{metadata.get('duration_sec', 0)}s"
             records = [
                     {

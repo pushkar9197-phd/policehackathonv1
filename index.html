@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chandigarh Police - Cyber Crime Forensic Workbench (BSA Sec 63)</title>
-  <link rel="stylesheet" href="styles.css?v=20260908_merged_v5">
+  <link rel="stylesheet" href="styles.css?v=20260908_merged_v6">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -518,12 +518,12 @@
                   </label>
                   <span class="badge badge-sm badge-blue" id="intake-case-status-badge">New Case</span>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                  <select id="select-existing-case" class="gov-input" style="flex: 1;" onchange="handleSelectExistingCase(this.value)">
+                <div style="display: flex; gap: 8px; align-items: center; width: 100%; min-width: 0;">
+                  <select id="select-existing-case" class="gov-input" style="flex: 1 1 0%; min-width: 0; width: 0;" onchange="handleSelectExistingCase(this.value)">
                     <option value="NEW">＋ [Create New Investigation Case]</option>
                   </select>
-                  <button type="button" class="btn btn-gov-secondary btn-sm" onclick="randomizeNewCase()" title="Generate unique randomized FIR & IO credentials" style="white-space: nowrap;">
-                    <span>🎲</span> Randomize Case
+                  <button type="button" class="btn btn-gov-secondary btn-sm" onclick="randomizeNewCase()" title="Generate unique randomized FIR & IO credentials" style="white-space: nowrap; flex-shrink: 0; padding: 7px 12px;">
+                    <span>🎲</span> Randomize
                   </button>
                 </div>
                 <div id="selected-case-summary" class="mono text-xs" style="color: #94a3b8; margin-top: 6px;">
@@ -1525,9 +1525,9 @@
               </label>
               <span class="badge badge-sm badge-purple">Local AI</span>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="induction-custom-text" class="gov-input" placeholder="Type or paste suspicious message (e.g. 'Bhai urgent 3 piece cold coffee ready rakhna Aroma hotel ke peeche')" style="flex: 1; font-size: 11.5px; background: #ffffff; color: var(--text-primary); border: 1px solid var(--border-medium);" onkeydown="if(event.key==='Enter') testCustomCodewordMessage()">
-              <button id="btn-test-custom-codeword" class="btn btn-gov-primary btn-sm" onclick="testCustomCodewordMessage()" style="white-space: nowrap;">
+            <div style="display: flex; gap: 8px; align-items: center; width: 100%; min-width: 0;">
+              <input type="text" id="induction-custom-text" class="gov-input" placeholder="Type or paste suspicious message (e.g. 'Bhai urgent 3 piece cold coffee ready rakhna Aroma hotel ke peeche')" style="flex: 1 1 0%; min-width: 0; width: 0; font-size: 11.5px; background: #ffffff; color: var(--text-primary); border: 1px solid var(--border-medium);" onkeydown="if(event.key==='Enter') testCustomCodewordMessage()">
+              <button id="btn-test-custom-codeword" class="btn btn-gov-primary btn-sm" onclick="testCustomCodewordMessage()" style="white-space: nowrap; flex-shrink: 0;">
                 Evaluate Line ➔
               </button>
             </div>
@@ -1542,11 +1542,11 @@
               </label>
               <span class="badge badge-sm badge-blue" id="induction-file-scope-badge">All Ingested Files</span>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <select id="induction-target-file-select" class="gov-input" style="font-size: 11px; padding: 4px 8px; flex: 1; background: #ffffff; color: var(--text-primary); border: 1px solid var(--border-medium);" onchange="handleInductionFileScopeChange()">
+            <div style="display: flex; gap: 8px; align-items: center; width: 100%; min-width: 0;">
+              <select id="induction-target-file-select" class="gov-input" style="font-size: 11px; padding: 4px 8px; flex: 1 1 0%; min-width: 0; width: 0; background: #ffffff; color: var(--text-primary); border: 1px solid var(--border-medium);" onchange="handleInductionFileScopeChange()">
                 <option value="all">All Ingested Evidence Files (Cross-Source Scan)</option>
               </select>
-              <button id="btn-wb-run-induction" class="btn btn-gov-primary btn-sm" onclick="runWorkbenchCodewordInduction()" style="white-space: nowrap;">
+              <button id="btn-wb-run-induction" class="btn btn-gov-primary btn-sm" onclick="runWorkbenchCodewordInduction()" style="white-space: nowrap; flex-shrink: 0;">
                 Scan for New Slang
               </button>
             </div>
@@ -2361,6 +2361,6 @@
 
   </div>
 
-  <script src="app.js?v=20260908_merged_v5"></script>
+  <script src="app.js?v=20260908_merged_v6"></script>
 </body>
 </html>

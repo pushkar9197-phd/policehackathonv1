@@ -724,7 +724,7 @@ body {
    -------------------------------------------------------------------------- */
 .wizard-2col-layout {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 360px minmax(0, 1fr);
   gap: 20px;
   padding: 20px 24px;
 }
@@ -944,7 +944,7 @@ body {
    -------------------------------------------------------------------------- */
 .evidence-top-grid {
   display: grid;
-  grid-template-columns: 1.25fr 1fr;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
   gap: 16px;
 }
 @media (max-width: 900px) {
@@ -3521,3 +3521,25 @@ button.btn-header-profile:hover,
 .dot-blue { background: #3b82f6; }
 .dot-amber { background: #f59e0b; }
 .dot-green { background: #10b981; }
+
+/* Robust Overflow Prevention Rules */
+.case-selection-box {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.case-selection-box select,
+.case-selection-box input {
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+.wizard-main-form-col {
+  min-width: 0;
+  max-width: 100%;
+}
+.drop-zone-large {
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}

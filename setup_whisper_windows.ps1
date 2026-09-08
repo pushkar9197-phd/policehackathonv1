@@ -5,9 +5,9 @@
 .DESCRIPTION
     Verifies and configures:
     1. NVIDIA GPU & CUDA capability via nvidia-smi.
-    2. Whisper executable (whisper-cli.exe with CUDA or CPU support).
+    2. Whisper executable (tools\whisper\whisper-cli.exe with AVX2/AVX512/CUDA).
     3. FFmpeg and FFprobe binaries for WhatsApp (.opus / .ogg) normalization.
-    4. Whisper GGML models (ggml-medium.bin, ggml-small.bin, ggml-base.bin).
+    4. Whisper GGML models (models\whisper\ggml-base.bin).
     5. Python virtual environment & optional faster-whisper CUDA fallback.
 #>
 
@@ -18,17 +18,16 @@ param(
 )
 
 Write-Host "=================================================================" -ForegroundColor Cyan
-Write-Host "🛡️  CHANDIGARH POLICE CYBER CRIME INVESTIGATION PLATFORM (PS3-DWID)" -ForegroundColor Cyan
-Write-Host "🎙️  Windows Whisper ASR & GPU Hardware Acceleration Diagnostic" -ForegroundColor DarkCyan
+Write-Host "   CHANDIGARH POLICE CYBER CRIME INVESTIGATION PLATFORM (PS3-DWID)" -ForegroundColor Cyan
+Write-Host "   Windows Whisper ASR & GPU Hardware Acceleration Diagnostic" -ForegroundColor DarkCyan
 Write-Host "=================================================================" -ForegroundColor Cyan
 Write-Host ""
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-if (-not $ScriptDir) { $ScriptDir = Get-Location }
+$ScriptDir = if ($PSScriptRoot) { $PSScriptRoot } elseif ($MyInvocation.MyCommand.Path) { Split-Path -Parent $MyInvocation.MyCommand.Path } else { (Get-Location).Path }
 Set-Location $ScriptDir
 
 # 1. Check NVIDIA GPU & CUDA
-Write-Host "🔍 [1/5] Probing Hardware Acceleration (NVIDIA GPU / CUDA)..." -ForegroundColor Yellow
+Write-Host "[1/5] Probing Hardware Acceleration (NVIDIA GPU / CUDA)..." -ForegroundColor Yellow
 $NvidiaFound = $false
 $GpuName = "None"
 $GpuVram = "0 MB"
@@ -41,19 +40,19 @@ if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) {
             $GpuName = $parts[0].Trim()
             $GpuVram = "$($parts[1].Trim()) MB"
             $NvidiaFound = $true
-            Write-Host "   ✅ Dedicated NVIDIA GPU Detected: $GpuName ($GpuVram VRAM)" -ForegroundColor Green
+            Write-Host "   [OK] Dedicated NVIDIA GPU Detected: $GpuName ($GpuVram VRAM)" -ForegroundColor Green
             Write-Host "      CUDA acceleration will enable ultra-fast transcription on larger models." -ForegroundColor DarkGray
         }
     } catch {}
 }
 
 if (-not $NvidiaFound) {
-    Write-Host "   ℹ️  No NVIDIA GPU detected via nvidia-smi." -ForegroundColor DarkYellow
+    Write-Host "   [INFO] No NVIDIA GPU detected via nvidia-smi." -ForegroundColor DarkYellow
     Write-Host "      Whisper will operate using multi-threaded CPU mode (AVX2/AVX512)." -ForegroundColor DarkGray
 }
 
 # 2. Check FFmpeg / FFprobe
-Write-Host "`n🔍 [2/5] Checking FFmpeg & FFprobe (Required for Opus/OGG WhatsApp Audio)..." -ForegroundColor Yellow
+Write-Host "`n[2/5] Checking FFmpeg and FFprobe (Required for Opus/OGG WhatsApp Audio)..." -ForegroundColor Yellow
 $FfmpegBin = $null
 $FfmpegCandidates = @(
     "$ScriptDir\tools\ffmpeg\bin\ffmpeg.exe",
@@ -70,16 +69,14 @@ if (-not $FfmpegBin -and (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
 }
 
 if ($FfmpegBin) {
-    Write-Host "   ✅ FFmpeg found: $FfmpegBin" -ForegroundColor Green
+    Write-Host "   [OK] FFmpeg found: $FfmpegBin" -ForegroundColor Green
 } else {
-    Write-Host "   ⚠️  FFmpeg is NOT found in PATH or standard locations." -ForegroundColor Red
-    Write-Host "      Quick installation options:" -ForegroundColor DarkGray
-    Write-Host "      Option A: Run in PowerShell: winget install Gyan.FFmpeg" -ForegroundColor White
-    Write-Host "      Option B: Download ffmpeg-release-essentials.zip and extract to $ScriptDir\tools\ffmpeg\bin\ffmpeg.exe" -ForegroundColor White
+    Write-Host "   [WARN] FFmpeg is NOT found in PATH or standard locations." -ForegroundColor Red
+    Write-Host "      Run: winget install Gyan.FFmpeg.Essentials" -ForegroundColor DarkGray
 }
 
 # 3. Check Whisper Executable
-Write-Host "`n🔍 [3/5] Checking Whisper CLI Executable..." -ForegroundColor Yellow
+Write-Host "`n[3/5] Checking Whisper CLI Executable..." -ForegroundColor Yellow
 $WhisperBin = $null
 $WhisperCandidates = @(
     "$ScriptDir\tools\whisper\whisper-cli.exe",
@@ -95,21 +92,18 @@ foreach ($wc in $WhisperCandidates) {
 }
 if (-not $WhisperBin) {
     if (Get-Command whisper-cli -ErrorAction SilentlyContinue) { $WhisperBin = (Get-Command whisper-cli).Source }
-    elseif (Get-Command whisper-cpp -ErrorAction SilentlyContinue) { $WhisperBin = (Get-Command whisper).Source }
+    elseif (Get-Command whisper-cpp -ErrorAction SilentlyContinue) { $WhisperBin = (Get-Command whisper-cpp).Source }
 }
 
 if ($WhisperBin) {
-    Write-Host "   ✅ Whisper executable found: $WhisperBin" -ForegroundColor Green
+    Write-Host "   [OK] Whisper executable found: $WhisperBin" -ForegroundColor Green
 } else {
-    Write-Host "   ℹ️  Standalone whisper-cli.exe not found." -ForegroundColor DarkYellow
-    Write-Host "      For maximum speed with your NVIDIA GPU on Windows:" -ForegroundColor DarkGray
-    Write-Host "      1. Download whisper-cublas release from https://github.com/ggerganov/whisper.cpp/releases" -ForegroundColor White
-    Write-Host "      2. Extract whisper-cli.exe into: $ScriptDir\tools\whisper\whisper-cli.exe" -ForegroundColor White
-    Write-Host "      (The platform will also check for Python faster-whisper as a fallback)" -ForegroundColor DarkGray
+    Write-Host "   [WARN] Standalone whisper-cli.exe not found." -ForegroundColor DarkYellow
+    Write-Host "      Download from https://github.com/ggml-org/whisper.cpp/releases and extract to tools\whisper" -ForegroundColor DarkGray
 }
 
 # 4. Check Models in models/whisper/
-Write-Host "`n🔍 [4/5] Checking Local Offline Whisper Models..." -ForegroundColor Yellow
+Write-Host "`n[4/5] Checking Local Offline Whisper Models..." -ForegroundColor Yellow
 $ModelDir = "$ScriptDir\models\whisper"
 if (-not (Test-Path $ModelDir)) {
     New-Item -ItemType Directory -Path $ModelDir -Force | Out-Null
@@ -126,42 +120,37 @@ foreach ($item in $CheckTiers) {
     $p = "$ModelDir\$($item.Name)"
     if (Test-Path $p) {
         $sizeMB = [math]::Round((Get-Item $p).Length / 1MB, 1)
-        Write-Host "   ✅ [$($item.Tier)] $($item.Name) ($sizeMB MB) is ready." -ForegroundColor Green
+        Write-Host "   [OK] [$($item.Tier)] $($item.Name) ($sizeMB MB) is ready." -ForegroundColor Green
         $AvailableModels += $item
     } else {
-        Write-Host "   ⚪ [$($item.Tier)] $($item.Name) is not downloaded." -ForegroundColor DarkGray
+        Write-Host "   [--] [$($item.Tier)] $($item.Name) is not downloaded." -ForegroundColor DarkGray
     }
 }
 
 if ($AvailableModels.Count -eq 0) {
-    Write-Host "   ⚠️  No GGML models found in $ModelDir." -ForegroundColor Yellow
+    Write-Host "   [WARN] No GGML models found in $ModelDir." -ForegroundColor Yellow
 } else {
     $activeModel = $AvailableModels[0]
-    Write-Host "   🎯 Active Selected Model: $($activeModel.Tier) ($($activeModel.Name))" -ForegroundColor Cyan
+    Write-Host "   [TARGET] Active Selected Model: $($activeModel.Tier) ($($activeModel.Name))" -ForegroundColor Cyan
 }
 
 # 5. Check Python Fallback Packages
-Write-Host "`n🔍 [5/5] Checking Python ASR Fallback Capabilities..." -ForegroundColor Yellow
+Write-Host "`n[5/5] Checking Python ASR Capabilities..." -ForegroundColor Yellow
 $py = if (Test-Path "$ScriptDir\.venv\Scripts\python.exe") { "$ScriptDir\.venv\Scripts\python.exe" } else { "python" }
-$pyHasFasterWhisper = & $py -c "import faster_whisper; print('OK')" 2>$null
-$pyHasOpenAIWhisper = & $py -c "import whisper; print('OK')" 2>$null
-$pyTorchCuda = & $py -c "import torch; print(f'CUDA:{torch.cuda.is_available()}')" 2>$null
 
-if ($pyHasFasterWhisper -match "OK") {
-    Write-Host "   ✓ faster-whisper package: Installed ($pyTorchCuda)" -ForegroundColor Green
-} elseif ($pyHasOpenAIWhisper -match "OK") {
-    Write-Host "   ✓ openai-whisper package: Installed ($pyTorchCuda)" -ForegroundColor Green
+$audioWorkerCheck = & $py -c "import audio_worker; print(audio_worker.get_whisper_binary() is not None)" 2>$null
+if ($audioWorkerCheck -match "True") {
+    Write-Host "   [OK] audio_worker module: Whisper binary and model detected and bound!" -ForegroundColor Green
 } else {
-    Write-Host "   ℹ️  Python whisper packages not installed in virtualenv." -ForegroundColor DarkGray
-    Write-Host "      (Optional: pip install faster-whisper for Python-level CUDA acceleration)" -ForegroundColor DarkGray
+    Write-Host "   [INFO] audio_worker module: Operating with forensic fallback normalizer." -ForegroundColor DarkCyan
 }
 
 Write-Host ""
 Write-Host "=================================================================" -ForegroundColor Green
-Write-Host "🎯 DIAGNOSTIC SUMMARY" -ForegroundColor Green
-Write-Host "   • NVIDIA GPU:        $(if ($NvidiaFound) {"$GpuName ($GpuVram)"} else {'None (CPU Mode)'})" -ForegroundColor $(if ($NvidiaFound) {'Green'} else {'DarkYellow'})
-Write-Host "   • Whisper Binary:    $(if ($WhisperBin) {$WhisperBin} else {'Missing (Python fallback)'})" -ForegroundColor $(if ($WhisperBin) {'Green'} else {'DarkYellow'})
-Write-Host "   • FFmpeg Normalizer: $(if ($FfmpegBin) {$FfmpegBin} else {'Missing'})" -ForegroundColor $(if ($FfmpegBin) {'Green'} else {'Red'})
-Write-Host "   • Active Model:      $(if ($AvailableModels.Count -gt 0) {"$($AvailableModels[0].Tier) ($($AvailableModels[0].Name))"} else {'None'})" -ForegroundColor $(if ($AvailableModels.Count -gt 0) {'Green'} else {'Red'})
+Write-Host "DIAGNOSTIC SUMMARY" -ForegroundColor Green
+Write-Host "   * NVIDIA GPU:        $(if ($NvidiaFound) {"$GpuName ($GpuVram)"} else {'None (CPU Mode)'})" -ForegroundColor $(if ($NvidiaFound) {'Green'} else {'DarkYellow'})
+Write-Host "   * Whisper Binary:    $(if ($WhisperBin) {$WhisperBin} else {'Missing'})" -ForegroundColor $(if ($WhisperBin) {'Green'} else {'DarkYellow'})
+Write-Host "   * FFmpeg Normalizer: $(if ($FfmpegBin) {$FfmpegBin} else {'Missing'})" -ForegroundColor $(if ($FfmpegBin) {'Green'} else {'Red'})
+Write-Host "   * Active Model:      $(if ($AvailableModels.Count -gt 0) {"$($AvailableModels[0].Tier) ($($AvailableModels[0].Name))"} else {'None'})" -ForegroundColor $(if ($AvailableModels.Count -gt 0) {'Green'} else {'Red'})
 Write-Host "=================================================================" -ForegroundColor Green
 Write-Host "Ready to launch: .\start.ps1`n" -ForegroundColor Cyan

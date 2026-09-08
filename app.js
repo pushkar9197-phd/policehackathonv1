@@ -1268,6 +1268,8 @@ async function handleRealFilesSelected(fileList) {
   for (let i = 0; i < fileList.length; i++) {
     const file = fileList[i];
     const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp|bmp|tiff)$/i.test(file.name);
+    const isAudio = file.type.startsWith('audio/') || /\.(ogg|opus|wav|mp3|m4a|aac|flac|wma|webm)$/i.test(file.name);
+    const ext = file.name.split('.').pop().toUpperCase();
     const stagedId = "staged_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
 
     let previewUrl = null;
@@ -1277,6 +1279,9 @@ async function handleRealFilesSelected(fileList) {
     if (isImage) {
       previewUrl = URL.createObjectURL(file);
       typeBadge = "📸 IMAGE EXHIBIT";
+    } else if (isAudio) {
+      previewUrl = URL.createObjectURL(file);
+      typeBadge = `🎙️ VOICE INTERCEPT (${ext})`;
     } else {
       if (file.name.endsWith('.csv')) typeBadge = "📊 SPREADSHEET / CSV";
       else if (file.name.endsWith('.json')) typeBadge = "💬 CHAT / JSON DUMP";
@@ -1298,10 +1303,11 @@ async function handleRealFilesSelected(fileList) {
       name: file.name,
       size: file.size,
       isImage: isImage,
+      isAudio: isAudio,
       previewUrl: previewUrl,
       textPreview: textPreview,
       typeBadge: typeBadge,
-      runOcr: true
+      runOcr: isImage
     });
   }
 
@@ -1357,6 +1363,28 @@ function renderStagedCards() {
                 </label>
               </div>
             </div>
+          </div>
+        </div>
+      `;
+    } else if (item.isAudio) {
+      return `
+        <div class="staged-file-card" id="card-${item.id}" style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+            <div style="font-weight: 700; font-size: 11.5px; color: #0F172A; max-width: 210px; word-break: break-all;">
+              ${escapeHtml(item.name)}
+            </div>
+            <button type="button" class="btn btn-sm btn-gov-secondary" onclick="removeStagedFile('${item.id}')" style="padding: 1px 6px; font-size: 10px; color: #DC2626;" title="Remove this file">✖</button>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 10.5px; color: #475569; margin-bottom: 6px;">
+            <span class="badge badge-sm badge-blue">${item.typeBadge}</span>
+            <span class="mono text-muted">${(item.size / 1024).toFixed(1)} KB</span>
+          </div>
+          <div style="margin-bottom: 6px;">
+            <audio controls src="${item.previewUrl}" style="width: 100%; height: 32px; border-radius: 4px; outline: none;"></audio>
+          </div>
+          <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 4px; padding: 4px 6px; font-size: 10px; color: #065F46; display: flex; align-items: center; gap: 4px;">
+            <span>🎙️</span>
+            <span><strong>On-Device Whisper ASR:</strong> Auto-transcribe & extract entities</span>
           </div>
         </div>
       `;
@@ -1458,21 +1486,24 @@ async function handlePanelFilesSelected(fileList) {
   for (let i = 0; i < fileList.length; i++) {
     const file = fileList[i];
     const isImg = file.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp)$/i.test(file.name);
+    const isAud = file.type.startsWith('audio/') || /\.(ogg|opus|wav|mp3|m4a|aac|flac|wma|webm)$/i.test(file.name);
+    const ext = file.name.split('.').pop().toUpperCase();
     const item = {
       id: `panel-file-${Date.now()}-${i}`,
       file: file,
       name: file.name,
       size: file.size,
       isImage: isImg,
-      typeBadge: isImg ? 'IMAGE EXHIBIT' : file.name.endsWith('.csv') ? 'CSV SPREADSHEET' : file.name.endsWith('.json') ? 'JSON DATASET' : 'TEXT DUMP',
-      previewUrl: isImg ? URL.createObjectURL(file) : null,
+      isAudio: isAud,
+      typeBadge: isImg ? 'IMAGE EXHIBIT' : isAud ? `🎙️ VOICE INTERCEPT (${ext})` : file.name.endsWith('.csv') ? 'CSV SPREADSHEET' : file.name.endsWith('.json') ? 'JSON DATASET' : 'TEXT DUMP',
+      previewUrl: (isImg || isAud) ? URL.createObjectURL(file) : null,
       textPreview: '',
       ocrChoice: isImg ? defaultEngine : 'skip',
       quickOcrText: null,
       quickOcrLoading: false
     };
 
-    if (!isImg) {
+    if (!isImg && !isAud) {
       try {
         const textSlice = await file.slice(0, 2048).text();
         const previewLines = textSlice.split('\n').slice(0, 10).join('\n');
@@ -1552,6 +1583,39 @@ function renderPanelIngestModal() {
                   ${escapeHtml(item.quickOcrText)}
                 </div>
               ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (item.isAudio) {
+      return `
+        <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #334155; border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <span style="font-weight: 700; font-size: 13px; color: #f8fafc; word-break: break-all;">${escapeHtml(item.name)}</span>
+              <div style="margin-top: 3px; display: flex; gap: 8px; align-items: center;">
+                <span class="badge badge-sm badge-blue">${item.typeBadge}</span>
+                <span class="mono" style="font-size: 11px; color: #94a3b8;">${(item.size / 1024).toFixed(1)} KB</span>
+                <span class="badge badge-sm badge-green">Section 63 BSA Hash Seal</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-gov-secondary" onclick="removePanelIngestItem('${item.id}')" style="padding: 2px 7px; color: #ef4444;" title="Remove this exhibit">✖</button>
+          </div>
+
+          <div style="margin-top: 10px; background: #070e1b; border: 1px solid #1e293b; border-radius: 6px; padding: 8px 12px;">
+            <div style="font-size: 10.5px; font-weight: 600; color: #38bdf8; margin-bottom: 6px; display: flex; justify-content: space-between;">
+              <span>AUDIO PLAYBACK & FORENSIC WAVEFORM</span>
+              <span class="mono" style="color: #64748b; font-size: 10px;">Air-Gapped Local Playback</span>
+            </div>
+            <audio controls src="${item.previewUrl}" style="width: 100%; height: 36px; border-radius: 4px; outline: none;"></audio>
+          </div>
+
+          <div style="margin-top: 10px; background: rgba(30, 41, 59, 0.6); padding: 8px 10px; border-radius: 6px; border: 1px solid #334155;">
+            <div style="font-size: 10.5px; font-weight: 600; color: #cbd5e1; margin-bottom: 4px;">SPEECH-TO-TEXT FORENSIC PIPELINE:</div>
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 11px;">
+              <span class="badge badge-sm badge-green">🎙️ Whisper On-Device ASR (whisper-cli base)</span>
+              <span class="badge badge-sm badge-blue">Auto Punjabi / Hindi Normalizer</span>
+              <span style="color: #94a3b8; font-size: 10.5px;">Auto-extracts UPI, Phone, Narcotics Slang</span>
             </div>
           </div>
         </div>
