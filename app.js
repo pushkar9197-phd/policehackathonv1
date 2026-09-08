@@ -908,29 +908,29 @@ function filterCaseDocketTable() {
     html += `
       <tr>
         <td>
-          <div style="font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <div style="font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
             <span>${escapeHtml(c.fir_number || c.case_id)}</span>
             ${relationBadge}
           </div>
-          <div class="mono text-xs" style="color: #38bdf8;">${escapeHtml(c.case_id)}</div>
+          <div class="mono text-xs" style="color: #0284c7; font-weight: 600;">${escapeHtml(c.case_id)}</div>
         </td>
         <td>
-          <div style="color: #cbd5e1;">${escapeHtml(c.police_station || "PS Cyber Crime, Chandigarh")}</div>
+          <div style="color: #334155;">${escapeHtml(c.police_station || "PS Cyber Crime, Chandigarh")}</div>
         </td>
         <td>
-          <div style="color: #f1f5f9; font-weight: 600;">${escapeHtml(c.io_name || "Investigating Officer")}</div>
+          <div style="color: #0f172a; font-weight: 600;">${escapeHtml(c.io_name || "Investigating Officer")}</div>
           <div class="mono text-xs" style="color: #64748b;">${escapeHtml(c.io_belt || "Belt #--")}</div>
         </td>
         <td>
           <span class="badge badge-sm badge-purple">${escapeHtml(catLabel)}</span>
         </td>
-        <td class="mono font-bold" style="color: #38bdf8;">
+        <td class="mono font-bold" style="color: #0284c7;">
           ${c.total_files || 0}
         </td>
-        <td class="mono" style="color: #94a3b8;">
+        <td class="mono" style="color: #475569;">
           ${c.total_records || 0}
         </td>
-        <td class="mono font-bold" style="color: ${c.flagged_records > 0 ? '#ef4444' : '#64748b'};">
+        <td class="mono font-bold" style="color: ${c.flagged_records > 0 ? '#dc2626' : '#94a3b8'};">
           ${c.flagged_records || 0}
         </td>
         <td>
@@ -2570,6 +2570,7 @@ async function renderDashboard() {
   renderChronology();
   renderNetworkGraph();
   updateCounts();
+  updateStatutoryRequisitions();
 }
 
 async function loadInductedLexicon() {
@@ -3179,9 +3180,9 @@ async function renderNetworkGraph(isFullView = null) {
         if (legendBox) legendBox.style.opacity = "0.4";
 
         container.innerHTML = `
-          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 25px 20px; background: #0b1120; border-radius: 6px; border: 1px dashed #334155; width: 100%;">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 25px 20px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1; width: 100%;">
             <div style="font-size: 26px; margin-bottom: 8px;">🕸️</div>
-            <div style="font-weight: 700; font-size: 11px; color: #94a3b8; letter-spacing: 0.05em; margin-bottom: 6px;">
+            <div style="font-weight: 700; font-size: 11px; color: #334155; letter-spacing: 0.05em; margin-bottom: 6px;">
               INSUFFICIENT MULTI-SOURCE LINKAGE FOR SYNDICATE GRAPH
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.45; max-width: 310px;">
@@ -3269,20 +3270,20 @@ async function renderNetworkGraph(isFullView = null) {
       const arrowCorrobId = isFullView ? "full-arrow-corrob" : "mini-arrow-corrob";
       const arrowDefaultId = isFullView ? "full-arrow-default" : "mini-arrow-default";
 
-      // Create SVG with unique IDs and class hooks
+      // Create SVG with unique IDs and class hooks (Light Mode canvas)
       container.innerHTML = `
-        <svg id="${svgId}" width="100%" height="100%" viewBox="0 0 ${width} ${height}" style="background: #0b1120; border-radius: 6px; user-select: none; width: 100%; height: 100%; display: block;">
+        <svg id="${svgId}" width="100%" height="100%" viewBox="0 0 ${width} ${height}" style="background: #ffffff; border-radius: 6px; user-select: none; width: 100%; height: 100%; display: block;">
           <defs>
             <marker id="${arrowCorrobId}" viewBox="0 0 10 10" refX="24" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8"/>
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0284c7"/>
             </marker>
             <marker id="${arrowDefaultId}" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b"/>
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94a3b8"/>
             </marker>
           </defs>
           <g id="${edgesGroupId}" class="svg-edges-group"></g>
           <g id="${nodesGroupId}" class="svg-nodes-group"></g>
-          <text id="${tooltipId}" class="svg-tooltip" x="14" y="24" fill="#94a3b8" font-size="${isFullView ? 12 : 9.5}" font-family="monospace" style="pointer-events: none; opacity: 0.9;">💡 Drag nodes to isolate • Click any node to inspect evidence source</text>
+          <text id="${tooltipId}" class="svg-tooltip" x="14" y="24" fill="#64748b" font-size="${isFullView ? 12 : 9.5}" font-family="monospace" style="pointer-events: none; opacity: 0.9;">💡 Drag nodes to isolate • Click any node to inspect evidence source</text>
         </svg>
       `;
 
@@ -3404,27 +3405,27 @@ function updateGraphSvgElements() {
     const dst = nodeMap[e.to];
     if (src && dst) {
       const isCorrob = (e.label || "").toLowerCase().includes("bank") || (e.label || "").toLowerCase().includes("corroborat");
-      const strokeColor = isCorrob ? "#38bdf8" : "#475569";
+      const strokeColor = isCorrob ? "#0284c7" : "#cbd5e1";
       const strokeWidth = isCorrob ? (isFull ? 2.5 : 2.0) : (isFull ? 1.6 : 1.3);
       const markerId = isCorrob ? markerCorrobId : markerDefaultId;
       const midX = (src.x + dst.x) / 2;
       const midY = (src.y + dst.y) / 2;
 
-      // Edge line with directional arrow
+      // Edge line with directional arrow (Light Mode)
       edgesHtml += `
         <line x1="${src.x}" y1="${src.y}" x2="${dst.x}" y2="${dst.y}" 
-              stroke="${strokeColor}" stroke-width="${strokeWidth}" opacity="${isCorrob ? 0.9 : 0.6}" 
+              stroke="${strokeColor}" stroke-width="${strokeWidth}" opacity="${isCorrob ? 0.95 : 0.85}" 
               marker-end="url(#${markerId})" />
       `;
 
-      // Edge label (compact)
+      // Edge label (compact, readable dark text)
       if (e.label) {
         const maxLen = isFull ? 26 : 18;
         const shortLabel = e.label.length > maxLen ? e.label.substring(0, maxLen - 2) + '..' : e.label;
         const fontSize = isFull ? 8.5 : 7;
         edgesHtml += `
-          <text x="${midX}" y="${midY - 4}" font-size="${fontSize}" fill="${isCorrob ? '#7dd3fc' : '#94a3b8'}" 
-                text-anchor="middle" font-family="monospace" opacity="0.85">${escapeHtml(shortLabel)}</text>
+          <text x="${midX}" y="${midY - 4}" font-size="${fontSize}" fill="${isCorrob ? '#0369a1' : '#475569'}" 
+                text-anchor="middle" font-family="monospace" font-weight="600" opacity="0.9">${escapeHtml(shortLabel)}</text>
         `;
       }
     }
@@ -3443,6 +3444,10 @@ function updateGraphSvgElements() {
     const strokeColor = isSelected ? "#38bdf8" : n.color;
     const fontSize = isFull ? 9 : 7.5;
 
+    const haloHtml = (isHovered || isSelected) ? `
+      <circle cx="${n.x}" cy="${n.y}" r="${r + 4}" fill="none" stroke="#0284c7" stroke-width="2" stroke-dasharray="3,3" opacity="0.9" />
+    ` : '';
+
     nodesHtml += `
       <g class="svg-node" data-node-id="${n.id}" style="cursor: pointer;" 
          onmousedown="startNodeDrag(event, '${n.id}')"
@@ -3450,9 +3455,9 @@ function updateGraphSvgElements() {
          onmouseleave="unhighlightNode('${n.id}')"
          ondblclick="jumpToSourceFromNode('${escapeHtml(n.label)}', '${escapeHtml(n.type)}', '${n.file_id || ''}', ${n.line_number || 'null'})"
          onclick="handleNodeClick(event, '${n.id}')">
-        <circle cx="${n.x}" cy="${n.y}" r="${r}" fill="#0f172a" stroke="${strokeColor}" stroke-width="${strokeWidth}" />
-        <circle cx="${n.x}" cy="${n.y}" r="${r - 3}" fill="${n.color}" opacity="0.25" />
-        <text x="${n.x}" y="${n.y + (fontSize / 2)}" font-size="${fontSize}" text-anchor="middle" fill="#f8fafc" font-family="monospace" font-weight="600" style="pointer-events: none;">
+        ${haloHtml}
+        <circle cx="${n.x}" cy="${n.y}" r="${r}" fill="${n.color}" stroke="${isSelected ? '#0284c7' : '#ffffff'}" stroke-width="${strokeWidth}" />
+        <text x="${n.x}" y="${n.y + (fontSize / 2.5)}" font-size="${fontSize}" text-anchor="middle" fill="#ffffff" font-family="monospace" font-weight="700" style="pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.4);">
           ${escapeHtml(shortLabel)}
         </text>
       </g>
@@ -4593,6 +4598,7 @@ function updateDossierMetrics() {
 }
 
 function updateCounts() {
+  updateStatutoryRequisitions();
   const total = REAL_TRIAGE_LEADS.length;
   const verified = REAL_TRIAGE_LEADS.filter(l => l.status === "verified").length;
   const financial = REAL_TRIAGE_LEADS.filter(l => l.category === "financial").length;
@@ -4669,17 +4675,122 @@ function closeDossierModal() {
   document.getElementById("modal-dossier").style.display = "none";
 }
 
+function updateStatutoryRequisitions() {
+  const bankBtn = document.getElementById("btn-sec91-bank");
+  const telecomBtn = document.getElementById("btn-sec91-telecom");
+  if (!bankBtn && !telecomBtn) return;
+
+  // 1. Gather all real financial endpoints
+  const financialLeads = (REAL_TRIAGE_LEADS || []).filter(l => 
+    l.category === "financial" || 
+    (l.type && (l.type.includes("UPI") || l.type.includes("BANK") || l.type.includes("WALLET") || l.type.includes("TRANSACTION")))
+  );
+  const upiList = Array.from((REAL_DISCOVERED_ENTITIES && REAL_DISCOVERED_ENTITIES.upi_handles) || []);
+  const allFinancialValues = new Set([
+    ...financialLeads.map(l => l.value),
+    ...upiList
+  ].filter(Boolean));
+
+  if (bankBtn) {
+    if (allFinancialValues.size === 0) {
+      bankBtn.disabled = true;
+      bankBtn.style.opacity = "0.45";
+      bankBtn.style.cursor = "not-allowed";
+      bankBtn.setAttribute("title", "No financial accounts or UPI handles discovered in current case exhibits.");
+      bankBtn.innerHTML = `<span>🏦</span> Draft Sec 91 Bank Freeze Notice <span class="badge badge-sm badge-neutral" style="font-size: 9px; margin-left: auto;">(No Financial Leads)</span>`;
+    } else {
+      bankBtn.disabled = false;
+      bankBtn.style.opacity = "1";
+      bankBtn.style.cursor = "pointer";
+      bankBtn.removeAttribute("title");
+      bankBtn.innerHTML = `<span>🏦</span> Draft Sec 91 Bank Freeze Notice <span class="badge badge-sm badge-green" style="font-size: 9px; margin-left: auto;">(${allFinancialValues.size} Target${allFinancialValues.size > 1 ? 's' : ''} Ready)</span>`;
+    }
+  }
+
+  // 2. Gather all real telecom / MSISDN endpoints
+  const phoneLeads = (REAL_TRIAGE_LEADS || []).filter(l => 
+    l.category === "phone" || 
+    (l.type && (l.type.includes("PHONE") || l.type.includes("MSISDN")))
+  );
+  const phoneList = Array.from((REAL_DISCOVERED_ENTITIES && REAL_DISCOVERED_ENTITIES.phones) || []);
+  const allPhoneValues = new Set([
+    ...phoneLeads.map(l => l.value),
+    ...phoneList
+  ].filter(Boolean));
+
+  if (telecomBtn) {
+    if (allPhoneValues.size === 0) {
+      telecomBtn.disabled = true;
+      telecomBtn.style.opacity = "0.45";
+      telecomBtn.style.cursor = "not-allowed";
+      telecomBtn.setAttribute("title", "No phone numbers or MSISDNs discovered in current case exhibits.");
+      telecomBtn.innerHTML = `<span>📡</span> Draft Sec 91 Telecom CDR Requisition <span class="badge badge-sm badge-neutral" style="font-size: 9px; margin-left: auto;">(No MSISDN Leads)</span>`;
+    } else {
+      telecomBtn.disabled = false;
+      telecomBtn.style.opacity = "1";
+      telecomBtn.style.cursor = "pointer";
+      telecomBtn.removeAttribute("title");
+      telecomBtn.innerHTML = `<span>📡</span> Draft Sec 91 Telecom CDR Requisition <span class="badge badge-sm badge-green" style="font-size: 9px; margin-left: auto;">(${allPhoneValues.size} MSISDN${allPhoneValues.size > 1 ? 's' : ''} Ready)</span>`;
+    }
+  }
+}
+
 function openNoticeModal(noticeType) {
   const container = document.getElementById("printable-notice-body");
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
   if (noticeType === 'bank') {
-    document.getElementById("notice-modal-title").textContent = "SECTION 91 CrPC STATUTORY REQUISITION NOTICE (BANK FREEZING)";
-    // Pull dynamic target financial endpoint if available
-    const activeUpi = Array.from(REAL_DISCOVERED_ENTITIES.upi_handles)[0] || 
-                      (REAL_TRIAGE_LEADS.find(l => l.category === "financial" && l.value.includes("@")) || {}).value || 
-                      "mule44@ybl";
+    const financialLeads = (REAL_TRIAGE_LEADS || []).filter(l => 
+      l.category === "financial" || 
+      (l.type && (l.type.includes("UPI") || l.type.includes("BANK") || l.type.includes("WALLET") || l.type.includes("TRANSACTION")))
+    );
+    const upiList = Array.from((REAL_DISCOVERED_ENTITIES && REAL_DISCOVERED_ENTITIES.upi_handles) || []);
     
+    const targets = [];
+    const seen = new Set();
+    financialLeads.forEach(l => {
+      if (!seen.has(l.value)) {
+        seen.add(l.value);
+        targets.push({
+          value: l.value,
+          type: l.type || 'UPI_ID',
+          source: l.filename || (l.fileId ? `Exhibit ${l.fileId}` : 'Seized File'),
+          line: l.lineNum || 1,
+          context: l.context || 'Identified financial remittance endpoint'
+        });
+      }
+    });
+    upiList.forEach(upi => {
+      if (!seen.has(upi)) {
+        seen.add(upi);
+        targets.push({
+          value: upi,
+          type: 'UPI_VPA',
+          source: 'Ingested Evidence',
+          line: 1,
+          context: 'Seized chat/statement remittance handle'
+        });
+      }
+    });
+
+    if (targets.length === 0) {
+      showToast("⚠️ Cannot draft Bank Freeze Notice: Zero financial or UPI endpoints discovered in case evidence.", "alert");
+      return;
+    }
+
+    document.getElementById("notice-modal-title").textContent = "SECTION 91 CrPC STATUTORY REQUISITION NOTICE (BANK FREEZING)";
+    
+    const tableRows = targets.map(t => `
+      <tr>
+        <td class="mono font-bold" style="color: #0369a1;">${escapeHtml(t.value)}</td>
+        <td class="mono font-bold">${escapeHtml(t.type)}</td>
+        <td>${escapeHtml(t.source)} (Line #${t.line})</td>
+        <td style="font-size: 11px; color: #475569;">${escapeHtml(t.context)}</td>
+      </tr>
+    `).join("");
+
+    const targetListText = targets.map(t => `<code>${escapeHtml(t.value)}</code>`).join(", ");
+
     container.innerHTML = `
       <div class="court-doc-header">
         <div class="court-doc-crest">OFFICE OF THE INSPECTOR OF POLICE, CYBER CRIME DIVISION</div>
@@ -4689,67 +4800,104 @@ function openNoticeModal(noticeType) {
 
       <div class="court-doc-section" style="margin-top: 10px;">
         <div><strong>To:</strong></div>
-        <div>The Nodal Officer / Branch Manager,</div>
-        <div>State Bank of India / YES Bank UPI Gateway Division, Sector 17, Chandigarh.</div>
+        <div>The Nodal Officer / Authorized Compliance Manager,</div>
+        <div>All Designated Payment System Operators (NPCI / Banks / Payment Gateways), Punjab & Chandigarh Jurisdiction.</div>
       </div>
 
       <div class="court-doc-section">
-        <div><strong>SUBJECT:</strong> Urgent Notice under Sec 91 CrPC in connection with <strong>${CASE_METADATA.fir}</strong> dated 11.08.2026 u/s 21/22/29 NDPS Act & Sec 66D IT Act.</div>
+        <div><strong>SUBJECT:</strong> Urgent Notice under Sec 91 CrPC in connection with <strong>${escapeHtml(CASE_METADATA.fir)}</strong> PS Cyber Crime Chandigarh.</div>
       </div>
 
       <div class="court-doc-section">
         <p class="court-paragraph">
-          Whereas during the investigation of the subject case, it has been established that the undermentioned Virtual Payment Address (UPI) and linked domestic bank accounts are being actively utilized as mule accounts for receiving proceeds of illicit narcotics distribution via encrypted platforms:
+          Whereas during forensic examination of seized electronic exhibits in the subject case, it has been established that the undermentioned Virtual Payment Addresses (VPAs) and linked beneficiary banking accounts were actively utilized for receiving, layering, or transferring illicit proceeds:
         </p>
         <table class="court-table">
           <thead>
             <tr>
-              <th>VPA / UPI HANDLE</th>
-              <th>LINKED ACCOUNT NO.</th>
-              <th>IFSC CODE</th>
-              <th>TXN REFERENCE (UTR)</th>
+              <th>VPA / FINANCIAL IDENTIFIER</th>
+              <th>MODALITY / TYPE</th>
+              <th>SEIZED SOURCE CITATION</th>
+              <th>FORENSIC EVIDENCE CONTEXT</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td class="mono font-bold">${escapeHtml(activeUpi)}</td>
-              <td class="mono font-bold">33910048291</td>
-              <td class="mono">SBIN0001243</td>
-              <td class="mono">422019284910 (₹3,500 Credit)</td>
-            </tr>
+            ${tableRows}
           </tbody>
         </table>
         <p class="court-paragraph">
-          You are hereby commanded under <strong>Section 91 CrPC</strong> to:
+          You are hereby commanded under <strong>Section 91 of the Code of Criminal Procedure (CrPC)</strong> / <strong>Section 94 Bharatiya Nagarik Suraksha Sanhita (BNSS)</strong> to:
         </p>
         <ol class="court-numbered-list">
-          <li><strong>IMMEDIATELY FREEZE</strong> all debit transactions on Account No. <code>33910048291</code> and linked VPA <code>${escapeHtml(activeUpi)}</code> with zero outward remittance.</li>
-          <li>Furnish certified copies of complete KYC documents (Aadhaar, PAN, registered mobile number, IP logs of netbanking logins) within <strong>24 hours</strong> of receipt of this notice.</li>
-          <li>Provide detailed statement of accounts from 01.01.2026 to date in encrypted CSV/PDF format.</li>
+          <li><strong>IMMEDIATELY FREEZE ALL DEBIT TRANSACTIONS</strong> on target endpoints (${targetListText}) with zero outward remittance, liens placed on all linked account numbers, and prevention of automated clearing house (ACH) settlements.</li>
+          <li>Furnish certified copies of complete KYC dossiers (including Aadhaar, PAN, registered contact numbers, and IP audit trails of netbanking logins) within <strong>24 hours</strong> of receipt of this notice.</li>
+          <li>Provide a certified complete Statement of Accounts covering the entire period of activity in encrypted CSV/PDF format pursuant to Section 63 BSA certificate compliance.</li>
         </ol>
       </div>
 
       <div class="court-signature-block">
         <div>
           <div><strong>Date of Issue:</strong> ${today}</div>
-          <div><strong>Dispatch No:</strong> CC/CHD/2026/SEC91/089</div>
+          <div><strong>Dispatch Ref:</strong> CC/CHD/SEC91/FIN/${Date.now().toString().slice(-6)}</div>
+          <div style="font-size: 10px; color: #64748b; margin-top: 2px;">Section 63(4) BSA Hash Certified Exhibit</div>
         </div>
         <div class="signature-box">
-          <div class="sig-space">[ Seal & Official Signature of IO ]</div>
-          <div class="sig-name"><strong>(${CASE_METADATA.io})</strong></div>
+          <div class="sig-space">[ Official Seal & Digital Signature ]</div>
+          <div class="sig-name"><strong>(${escapeHtml(CASE_METADATA.io)})</strong></div>
           <div class="sig-title">Inspector of Police / Investigating Officer</div>
-          <div class="sig-sub">${CASE_METADATA.ps}</div>
+          <div class="sig-sub">${escapeHtml(CASE_METADATA.ps)}</div>
         </div>
       </div>
     `;
-    logAuditEvent("SEC91_BANK_NOTICE", `Generated Section 91 CrPC Debit Freeze Notice for ${activeUpi}`);
+    logAuditEvent("SEC91_BANK_NOTICE", `Generated Section 91 CrPC Debit Freeze Notice for ${targets.length} financial target(s)`);
   } else {
-    // Pull dynamic target MSISDN if available
-    const activePhone = Array.from(REAL_DISCOVERED_ENTITIES.phones)[0] || 
-                        (REAL_TRIAGE_LEADS.find(l => l.type === "PHONE") || {}).value || 
-                        "+91 98765-21440";
+    const phoneLeads = (REAL_TRIAGE_LEADS || []).filter(l => 
+      l.category === "phone" || 
+      (l.type && (l.type.includes("PHONE") || l.type.includes("MSISDN")))
+    );
+    const phoneList = Array.from((REAL_DISCOVERED_ENTITIES && REAL_DISCOVERED_ENTITIES.phones) || []);
+    
+    const targets = [];
+    const seen = new Set();
+    phoneLeads.forEach(l => {
+      if (!seen.has(l.value)) {
+        seen.add(l.value);
+        targets.push({
+          value: l.value,
+          source: l.filename || (l.fileId ? `Exhibit ${l.fileId}` : 'Seized File'),
+          line: l.lineNum || 1,
+          context: l.context || 'Extracted mobile communication node'
+        });
+      }
+    });
+    phoneList.forEach(ph => {
+      if (!seen.has(ph)) {
+        seen.add(ph);
+        targets.push({
+          value: ph,
+          source: 'Ingested Evidence',
+          line: 1,
+          context: 'Seized intercept contact handle'
+        });
+      }
+    });
+
+    if (targets.length === 0) {
+      showToast("⚠️ Cannot draft Telecom Requisition: Zero phone numbers or MSISDNs discovered in case evidence.", "alert");
+      return;
+    }
 
     document.getElementById("notice-modal-title").textContent = "SECTION 91 CrPC TELECOM CDR & TOWER DUMP ORDER";
+
+    const tableRows = targets.map(t => `
+      <tr>
+        <td class="mono font-bold" style="color: #0369a1;">${escapeHtml(t.value)}</td>
+        <td>${escapeHtml(t.source)} (Line #${t.line})</td>
+        <td class="mono" style="font-size: 11px;">01.01.2026 to Present</td>
+        <td style="font-size: 11px;">Full In/Out CDR with Tower Azimuth, GPRS IPDR, IMEI History, CAF & Aadhaar</td>
+      </tr>
+    `).join("");
+
     container.innerHTML = `
       <div class="court-doc-header">
         <div class="court-doc-crest">OFFICE OF THE SUPERINTENDENT OF POLICE (CYBER & OPERATIONS)</div>
@@ -4760,33 +4908,28 @@ function openNoticeModal(noticeType) {
       <div class="court-doc-section" style="margin-top: 10px;">
         <div><strong>To:</strong></div>
         <div>The Nodal Officer (Law Enforcement Assistance),</div>
-        <div>Bharti Airtel Ltd. / Reliance Jio Infocomm Ltd., Punjab & Chandigarh Telecom Circle.</div>
+        <div>All Telecom Service Providers (Bharti Airtel / Reliance Jio / Vodafone Idea / BSNL), Punjab & Chandigarh Circle.</div>
       </div>
 
       <div class="court-doc-section">
-        <div><strong>SUBJECT:</strong> Requisition of CDR/IPDR/CAF in <strong>${CASE_METADATA.fir}</strong> PS Cyber Crime Chandigarh.</div>
+        <div><strong>SUBJECT:</strong> Requisition of CDR/IPDR/CAF in <strong>${escapeHtml(CASE_METADATA.fir)}</strong> PS Cyber Crime Chandigarh.</div>
       </div>
 
       <div class="court-doc-section">
         <p class="court-paragraph">
-          In connection with investigation of ${CASE_METADATA.fir}, you are directed to preserve and furnish the Call Detail Records (CDR) with Tower Location/Azimuth, Customer Application Form (CAF), and IP Detail Records (IPDR) for the following target identifier:
+          In connection with ongoing forensic investigation in case FIR No. <strong>${escapeHtml(CASE_METADATA.fir)}</strong>, you are hereby directed under Section 91 CrPC / Section 94 BNSS to preserve, certify, and furnish the Call Detail Records (CDR) with Tower Cell-ID and Azimuth, Customer Acquisition Forms (CAF), and GPRS IP Detail Records (IPDR) for the undermentioned target identifiers:
         </p>
         <table class="court-table">
           <thead>
             <tr>
               <th>TARGET MSISDN (MOBILE)</th>
-              <th>ASSOCIATED IMEI</th>
+              <th>SOURCE EXHIBIT CITATION</th>
               <th>PERIOD OF RECORDS</th>
               <th>REQUISITION SCOPE</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td class="mono font-bold">${escapeHtml(activePhone)}</td>
-              <td class="mono">864201049281740</td>
-              <td class="mono">01.07.2026 to 12.08.2026</td>
-              <td>Full Incoming/Outgoing CDR, GPRS IPDR, First & Last Tower Cell-ID</td>
-            </tr>
+            ${tableRows}
           </tbody>
         </table>
       </div>
@@ -4794,7 +4937,8 @@ function openNoticeModal(noticeType) {
       <div class="court-signature-block">
         <div>
           <div><strong>Date of Issue:</strong> ${today}</div>
-          <div><strong>Ref:</strong> CC/CHD/CDR/2026/410</div>
+          <div><strong>Ref:</strong> CC/CHD/CDR/SEC91/${Date.now().toString().slice(-6)}</div>
+          <div style="font-size: 10px; color: #64748b; margin-top: 2px;">Preserved under Section 63 BSA Digital Custody</div>
         </div>
         <div class="signature-box">
           <div class="sig-space">[ Authorized Signatory / DSP Cyber ]</div>
@@ -4804,10 +4948,21 @@ function openNoticeModal(noticeType) {
         </div>
       </div>
     `;
-    logAuditEvent("SEC91_TELECOM_ORDER", `Generated Section 91 CrPC Telecom CDR Requisition for ${activePhone}`);
+    logAuditEvent("SEC91_TELECOM_ORDER", `Generated Section 91 CrPC Telecom CDR Requisition for ${targets.length} MSISDN target(s)`);
   }
 
   document.getElementById("modal-notice").style.display = "flex";
+}
+
+function copyNoticeText() {
+  const container = document.getElementById("printable-notice-body");
+  if (!container) return;
+  const text = container.innerText || container.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast("📋 Official Section 91 Requisition Notice copied to clipboard!", "success");
+  }).catch(err => {
+    showToast("Copy notice error: " + err.message, "error");
+  });
 }
 
 function closeNoticeModal() {
