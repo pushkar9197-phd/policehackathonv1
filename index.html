@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chandigarh Police - Cyber Crime Forensic Workbench (BSA Sec 63)</title>
-  <link rel="stylesheet" href="styles.css?v=20260908_light">
+  <link rel="stylesheet" href="styles.css?v=20260908_tabbed_navy">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -139,16 +139,21 @@
       display: inline-flex !important;
       align-items: center !important;
       gap: 7px !important;
-      background: #F1F5F9 !important;
-      border: 1px solid #CBD5E1 !important;
-      color: #0F172A !important;
+      background: rgba(30, 58, 138, 0.5) !important;
+      border: 1px solid rgba(96, 165, 250, 0.4) !important;
+      color: #F8FAFC !important;
       padding: 4px 12px !important;
       border-radius: 20px !important;
       cursor: pointer !important;
       font-size: 11.5px !important;
       font-weight: 600 !important;
       white-space: nowrap !important;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+    }
+    button.btn-header-profile:hover, .btn-header-profile:hover {
+      background: rgba(30, 58, 138, 0.75) !important;
+      border-color: rgba(96, 165, 250, 0.7) !important;
+      color: #FFFFFF !important;
     }
     .docket-scope-ribbon {
       display: flex !important;
@@ -708,20 +713,20 @@
             </div>
 
             <!-- Multi-File Upload Live Progress Bar -->
-            <div id="upload-progress-container" style="display: none; background: #070d19; border: 1px solid #1e293b; border-radius: 6px; padding: 12px 16px;">
+            <div id="upload-progress-container" style="display: none; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
               <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px;">
-                <span id="upload-progress-label" style="color: #f8fafc; font-weight: 600;">Ingesting files into forensic SQLite database...</span>
-                <span id="upload-progress-pct" class="mono font-bold" style="color: #38bdf8;">0%</span>
+                <span id="upload-progress-label" style="color: #0F172A; font-weight: 600;">Ingesting files into forensic SQLite database...</span>
+                <span id="upload-progress-pct" class="mono font-bold" style="color: #1D4ED8;">0%</span>
               </div>
-              <div class="ai-progress-track" style="height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden;">
-                <div class="ai-progress-bar" id="upload-progress-bar" style="width: 0%; height: 100%; background: #38bdf8; transition: width 0.2s;"></div>
+              <div class="ai-progress-track" style="height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden;">
+                <div class="ai-progress-bar" id="upload-progress-bar" style="width: 0%; height: 100%; background: #1D4ED8; transition: width 0.2s;"></div>
               </div>
             </div>
 
             <!-- Real-Time Discovered Forensic Insights Banner -->
-            <div id="live-insights-banner" style="display: none; background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 12px 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 10px;">
-                <span class="font-bold text-xs" style="color: #38bdf8; letter-spacing: 0.05em;">⚡ REAL-TIME FORENSIC TRIAGE FINDINGS</span>
+            <div id="live-insights-banner" style="display: none; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px; margin-bottom: 10px;">
+                <span class="font-bold text-xs" style="color: #1D4ED8; letter-spacing: 0.05em;">⚡ REAL-TIME FORENSIC TRIAGE FINDINGS</span>
                 <span class="badge badge-sm badge-green" id="insights-record-count">0 Records Processed</span>
               </div>
               <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 11px;">
@@ -748,7 +753,7 @@
             <!-- Staged Media & Exhibits Review Queue with Previews & OCR Toggles -->
             <div id="staged-preview-section" style="display: none;">
               <div class="section-subhead flex-between" style="margin-bottom: 8px;">
-                <span style="color: #f8fafc; font-weight: 700;">STAGED EXHIBITS (PREVIEWS & OCR SELECTION)</span>
+                <span style="color: #0F172A; font-weight: 700;">STAGED EXHIBITS (PREVIEWS & OCR SELECTION)</span>
                 <span class="badge badge-sm badge-blue" id="staged-count-badge">0 Files Staged</span>
               </div>
               <div id="staged-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px;">
@@ -759,10 +764,10 @@
             <!-- Evidence Queue / Manifest Table -->
             <div class="evidence-queue-section" id="evidence-queue-section" style="display: none;">
               <div class="section-subhead flex-between" style="margin-bottom: 8px;">
-                <span style="color: #f8fafc; font-weight: 700;">INGESTED EVIDENCE MANIFEST (CALCULATED SHA-256 HASHES)</span>
+                <span style="color: #0F172A; font-weight: 700;">INGESTED EVIDENCE MANIFEST (CALCULATED SHA-256 HASHES)</span>
                 <span class="badge badge-sm badge-green" id="staged-files-badge">0 Files Staged</span>
               </div>
-              <div style="overflow-x: auto; background: #070d19; border: 1px solid #1e293b; border-radius: 6px;">
+              <div style="overflow-x: auto; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                 <table class="gov-table" style="font-size: 11px; width: 100%;">
                   <thead>
                     <tr>
@@ -866,7 +871,7 @@
           <div class="wizard-form-body">
             <!-- Pipeline Execution Presets Side-by-Side (50% / 50%) -->
             <div>
-              <label class="form-label" style="margin-bottom: 8px; font-weight: 700; color: #38bdf8; font-size: 11px; letter-spacing: 0.05em;">
+              <label class="form-label" style="margin-bottom: 8px; font-weight: 700; color: #0F172A; font-size: 11.5px; letter-spacing: 0.05em;">
                 PIPELINE EXECUTION PRESET *
               </label>
               <div class="engine-presets-grid">
@@ -1100,13 +1105,13 @@
                 <span id="pipeline-status-text" style="font-weight: 600; color: #f8fafc;">Initializing local inference pipeline...</span>
                 <span id="pipeline-percentage" class="font-bold" style="color: #38bdf8; font-size: 13px;">0%</span>
               </div>
-              <div class="bar-track" style="height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden;">
+              <div class="bar-track" style="height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden;">
                 <div class="bar-fill bar-blue" id="pipeline-progress-fill" style="width: 0%; height: 100%; background: #38bdf8; transition: width 0.2s ease;"></div>
               </div>
             </div>
 
             <!-- Live KPI Feedback Strip -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 10px 0; background: #070d19; border: 1px solid #1e293b; border-radius: 6px; padding: 12px; text-align: center;">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 10px 0; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 6px; padding: 12px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
               <div>
                 <div class="text-xs text-muted">Exhibits</div>
                 <div class="font-bold text-base" id="pipeline-kpi-files" style="color: #f8fafc;">0</div>
@@ -1144,12 +1149,42 @@
     <!-- ===================================================================== -->
     <!-- MAIN WORKBENCH: THE CLEAN OFFICER COMMAND CENTER -->
     <!-- ===================================================================== -->
-    <main class="workbench-layout" id="screen-dashboard" style="display: none;">
+    <main class="workbench-layout tabbed-mode" id="screen-dashboard" style="display: none;">
+
+      <!-- TOP WORKBENCH SEGMENT TABS BAR -->
+      <div class="workbench-tab-bar" id="workbench-tab-bar">
+        <div class="workbench-tabs-group">
+          <button class="wb-nav-tab active" id="wb-nav-btn-evidence" onclick="switchWorkbenchTab('evidence')">
+            <span class="wb-tab-num">1</span>
+            <span class="wb-tab-title">📁 Seized Evidence & Raw Stream</span>
+            <span class="wb-tab-count-pill" id="wb-tab-files-count">0 Files</span>
+          </button>
+          <button class="wb-nav-tab" id="wb-nav-btn-triage" onclick="switchWorkbenchTab('triage')">
+            <span class="wb-tab-num">2</span>
+            <span class="wb-tab-title">🔍 Extraction & Corroborated Triage</span>
+            <span class="wb-tab-count-pill alert" id="wb-tab-triage-count">0 Leads</span>
+          </button>
+          <button class="wb-nav-tab" id="wb-nav-btn-insights" onclick="switchWorkbenchTab('insights')">
+            <span class="wb-tab-num">3</span>
+            <span class="wb-tab-title">⚡ Actions, Graph & Intelligence</span>
+            <span class="wb-tab-count-pill" id="wb-tab-insights-badge">Target Dossier</span>
+          </button>
+        </div>
+
+        <div class="workbench-split-toggle-wrap">
+          <button class="btn btn-sm btn-gov-secondary" id="wb-btn-split-toggle" onclick="toggleWorkbenchSplitView()" title="Toggle between Roomy Tabbed View and 3-Column Split View">
+            <span id="wb-split-icon">⊞</span> <span id="wb-split-label">3-Column Split View</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- WORKBENCH PANELS CONTAINER -->
+      <div class="workbench-panels-container" id="workbench-panels-container">
 
       <!-- ================================================================= -->
       <!-- PANEL 1: EVIDENCE EXPLORER & LINE INSPECTOR (LEFT) -->
       <!-- ================================================================= -->
-      <section class="panel panel-left" id="panel-evidence">
+      <section class="panel panel-left active" id="panel-evidence">
         <div class="panel-header">
           <div class="panel-title-group">
             <span class="panel-num">1</span>
@@ -1198,7 +1233,7 @@
         </div>
 
         <!-- Evidence View Mode Toggle Bar (Visible for Image OCR Exhibits) -->
-        <div class="evidence-view-toggle" id="evidence-view-toggle-bar" style="display: none; padding: 6px 12px; background: #0f172a; border-bottom: 1px solid var(--border-color); align-items: center; justify-content: space-between;">
+        <div class="evidence-view-toggle" id="evidence-view-toggle-bar" style="display: none; padding: 6px 12px; background: #F8FAFC; border-bottom: 1px solid #CBD5E1; align-items: center; justify-content: space-between;">
           <div style="display: flex; gap: 6px;">
             <button id="view-mode-text-btn" class="btn btn-sm btn-gov-primary" onclick="setEvidenceViewMode('text')" style="padding: 3px 8px; font-size: 11px;">
               📄 OCR Stream
@@ -1223,12 +1258,12 @@
         </div>
 
         <!-- Seized Screenshot Exhibit Viewer -->
-        <div class="evidence-image-viewer" id="evidence-image-container" style="display: none; height: calc(100% - 210px); overflow-y: auto; text-align: center; padding: 12px; background: #0b1120;">
+        <div class="evidence-image-viewer" id="evidence-image-container" style="display: none; height: calc(100% - 210px); overflow-y: auto; text-align: center; padding: 12px; background: #F8FAFC;">
           <div style="margin-bottom: 8px; font-size: 11px; color: #94a3b8; display: flex; justify-content: space-between; align-items: center;">
             <span class="font-bold text-xs" style="color: #38bdf8;">SEIZED EXHIBIT (SECTION 63(4) BSA FORENSIC PREVIEW)</span>
             <a id="image-download-link" href="#" target="_blank" class="text-blue" style="text-decoration: underline; font-size: 11px;">Full Resolution ↗</a>
           </div>
-          <div class="evidence-img-wrapper" style="position: relative; display: inline-block; max-width: 100%; border: 1px solid #334155; border-radius: 6px; overflow: hidden; background: #020617; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+          <div class="evidence-img-wrapper" style="position: relative; display: inline-block; max-width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; overflow: hidden; background: #FFFFFF; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
             <img id="evidence-screenshot-img" src="" alt="Seized Evidence Screenshot" style="max-width: 100%; max-height: 480px; display: block; object-fit: contain; margin: 0 auto;">
           </div>
           <div id="image-meta-subtext" class="text-muted text-xs mono" style="margin-top: 8px;">--</div>
@@ -1519,7 +1554,7 @@
         </div>
 
       </section>
-
+      </div><!-- /workbench-panels-container -->
     </main>
 
     <!-- ================================================================= -->
@@ -2098,7 +2133,7 @@
 
         <div class="modal-body" style="padding: 20px;">
           <!-- Case Brief Banner -->
-          <div class="share-case-brief" style="background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+          <div class="share-case-brief" style="background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 6px; padding: 12px; margin-bottom: 16px; color: #0F172A;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
               <span class="mono text-xs" style="color: #38bdf8;" id="share-modal-case-id">FIR_104_2026</span>
               <span class="badge badge-sm badge-purple" id="share-modal-category">NDPS Cyber</span>
@@ -2189,6 +2224,6 @@
 
   </div>
 
-  <script src="app.js?v=20260908v4"></script>
+  <script src="app.js?v=20260908_tabbed_navy"></script>
 </body>
 </html>

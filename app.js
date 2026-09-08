@@ -1007,7 +1007,7 @@ function goToStep(stepNum) {
   } else if (stepNum === 4) {
     document.getElementById('screen-loading').style.display = 'flex';
   } else if (stepNum === 5) {
-    document.getElementById('screen-dashboard').style.display = 'grid';
+    document.getElementById('screen-dashboard').style.display = 'flex';
     const modelBadge = document.getElementById('header-model-badge');
     if (modelBadge) modelBadge.style.display = 'inline-flex';
     const casePill = document.getElementById('header-active-case-pill');
@@ -1017,6 +1017,7 @@ function goToStep(stepNum) {
     if (navDocket) navDocket.classList.remove('active');
     if (navWb) navWb.classList.add('active');
     renderDashboard();
+    switchWorkbenchTab(CURRENT_WORKBENCH_TAB || 'triage');
   }
 }
 
@@ -2603,6 +2604,10 @@ function filterRawLines() {
 }
 
 async function traceToSource(fileId, lineNum) {
+  // If in tabbed mode, automatically switch to Evidence tab so the line is visible immediately
+  if (!IS_WORKBENCH_SPLIT && CURRENT_WORKBENCH_TAB !== 'evidence') {
+    switchWorkbenchTab('evidence');
+  }
   if (currentSelectedFileId !== fileId) {
     await selectFile(fileId);
   }
@@ -3759,18 +3764,42 @@ async function runWorkbenchCodewordInduction() {
   
   // Render Live AI Telemetry HUD
   container.innerHTML = `
-    <div id="wb-induction-hud" class="ai-telemetry-hud">
-      <div class="ai-telemetry-header">
-        <div style="display: flex; align-items: center;">
+    <div id="wb-induction-hud" class="ai-telemetry-hud" style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div class="ai-telemetry-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div style="display: flex; align-items: center; gap: 6px;">
           <span class="ai-pulse-dot" id="wb-pulse-dot"></span>
-          <span class="mono font-bold text-xs" style="color: #38bdf8;" id="wb-hud-status">SLM Pipeline: Initializing On-Device LFM2.5 Core...</span>
+          <span class="mono font-bold text-xs" style="color: #1D4ED8;" id="wb-hud-status">SLM Pipeline: Initializing On-Device LFM2.5 Core...</span>
         </div>
         <span class="badge badge-sm badge-blue mono" id="wb-hud-counter">0 Evaluated</span>
       </div>
 
-      <div class="ai-progress-track">
-        <div class="ai-progress-bar" id="wb-hud-bar" style="width: 0%;"></div>
+      <div class="ai-progress-track" style="height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
+        <div class="ai-progress-bar" id="wb-hud-bar" style="width: 0%; height: 100%; background: #1D4ED8; transition: width 0.2s;"></div>
       </div>
+
+      <div class="ai-kpi-bar" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px;">
+        <div class="ai-kpi-item" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 6px; text-align: center;">
+          <div class="ai-kpi-val" id="wb-kpi-model" style="font-weight: 700; color: #0F172A; font-size: 13px;">LFM2.5-8B</div>
+          <div class="ai-kpi-label" style="font-size: 9px; color: #64748B; text-transform: uppercase;">Active Core</div>
+        </div>
+        <div class="ai-kpi-item" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 6px; text-align: center;">
+          <div class="ai-kpi-val text-amber" id="wb-kpi-latency" style="font-weight: 700; font-size: 13px;">-- ms</div>
+          <div class="ai-kpi-label" style="font-size: 9px; color: #64748B; text-transform: uppercase;">Latency</div>
+        </div>
+        <div class="ai-kpi-item" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 6px; text-align: center;">
+          <div class="ai-kpi-val text-green" id="wb-kpi-speed" style="font-weight: 700; font-size: 13px;">-- tps</div>
+          <div class="ai-kpi-label" style="font-size: 9px; color: #64748B; text-transform: uppercase;">Decode Speed</div>
+        </div>
+        <div class="ai-kpi-item" style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; padding: 6px; text-align: center;">
+          <div class="ai-kpi-val text-purple" id="wb-kpi-found" style="font-weight: 700; font-size: 13px;">0</div>
+          <div class="ai-kpi-label" style="font-size: 9px; color: #64748B; text-transform: uppercase;">Surfaced</div>
+        </div>
+      </div>
+
+      <div class="terminal-console" id="wb-terminal-console" style="background: #0F172A; color: #E2E8F0; border-radius: 4px; padding: 8px 10px; font-family: monospace; font-size: 10px; max-height: 120px; overflow-y: auto;">
+        <div class="terminal-line"><span class="terminal-ts">[SYS]</span> <span class="terminal-msg" style="color: #38bdf8;">Forensic SLM Engine Online  •  Target Port: 8012  •  T=0.0</span></div>
+      </div>
+    </div>
 
       <div class="ai-kpi-bar">
         <div class="ai-kpi-item">
@@ -3951,37 +3980,37 @@ async function runWorkbenchCodewordInduction() {
 function renderSingleWorkbenchCard(c) {
   const fileName = c.fileName || (REAL_FILES.find(f => f.file_id === c.fileId)?.filename) || "Case Evidence";
   return `
-    <div class="induction-card fade-in-slide-up" id="wb-card-${c.id}" style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 12px; margin-bottom: 10px;">
-      <div style="font-size: 10.5px; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; padding-bottom: 5px;">
-        <span>📁 <strong>Exhibit Source:</strong> <span class="mono" style="color: #f1f5f9;">${escapeHtml(fileName)}</span></span>
-        <span class="mono" style="color: #94a3b8;">Line #${c.lineNum}  •  ${escapeHtml(c.sender)}</span>
+    <div class="induction-card fade-in-slide-up" id="wb-card-${c.id}" style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="font-size: 11px; color: #1D4ED8; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
+        <span>📁 <strong>Exhibit Source:</strong> <span class="mono" style="color: #0F172A; font-weight: 600;">${escapeHtml(fileName)}</span></span>
+        <span class="mono" style="color: #64748B;">Line #${c.lineNum}  •  ${escapeHtml(c.sender)}</span>
       </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="font-size: 11px; color: #94a3b8; font-weight: 700;">SUSPECTED SLANG:</span>
-          <input type="text" id="wb-term-${c.id}" value="${escapeHtml(c.term)}" class="gov-input" style="width: 130px; font-weight: bold; color: #f59e0b; padding: 2px 6px; font-size: 12px; height: 24px;">
-          <span class="badge badge-sm badge-blue" style="font-size: 9px;">${c.latency} ms</span>
-          ${c.lineNum ? `<button class="btn btn-sm btn-gov-secondary" onclick="traceToSource('${c.fileId}', ${c.lineNum})" style="padding: 1px 6px; font-size: 9.5px; height: 20px;">📍 Trace to Line</button>` : ''}
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 11px; color: #0F172A; font-weight: 700;">SUSPECTED SLANG:</span>
+          <input type="text" id="wb-term-${c.id}" value="${escapeHtml(c.term)}" class="gov-input" style="width: 140px; font-weight: 700; color: #B45309; background: #FFFBEB; border: 1px solid #FCD34D; padding: 2px 8px; font-size: 12px; height: 26px; border-radius: 4px;">
+          <span class="badge badge-sm badge-blue" style="font-size: 9.5px;">${c.latency} ms</span>
+          ${c.lineNum ? `<button class="btn btn-sm btn-gov-secondary" onclick="traceToSource('${c.fileId}', ${c.lineNum})" style="padding: 2px 8px; font-size: 10px; height: 24px;">📍 Trace to Line</button>` : ''}
         </div>
         <span class="badge badge-sm badge-amber" id="wb-status-${c.id}">Pending Review</span>
       </div>
 
-      <div style="font-size: 11px; color: #cbd5e1; margin: 4px 0;">
-        <strong>Evidence Text:</strong> <span class="mono" style="background: rgba(0,0,0,0.25); padding: 2px 4px; border-radius: 3px;">"${escapeHtml(c.message)}"</span>
+      <div style="font-size: 11.5px; color: #1E293B; margin: 6px 0; word-break: break-word;">
+        <strong>Evidence Text:</strong> <span class="mono" style="background: #F1F5F9; border: 1px solid #E2E8F0; padding: 3px 6px; border-radius: 4px; display: inline-block; max-width: 100%; word-break: break-word;">"${escapeHtml(c.message)}"</span>
       </div>
 
-      <div style="display: flex; gap: 6px; align-items: center; margin-top: 8px;">
-        <select id="wb-meaning-${c.id}" class="gov-input" style="font-size: 10.5px; padding: 3px 6px; flex: 1; height: 28px;">
+      <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+        <select id="wb-meaning-${c.id}" class="gov-input" style="font-size: 11px; padding: 3px 8px; flex: 1; min-width: 200px; height: 30px; background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1;">
           <option value="Heroin / Opiate Codeword">Heroin / Opiate Codeword (NDPS Sec 21)</option>
           <option value="MDMA / Synthetic Stimulant">MDMA / Synthetic Stimulant (NDPS Sec 22)</option>
           <option value="Prescription Psychotropic">Prescription Psychotropic (NDPS Sec 22)</option>
           <option value="Cannabis Derivative">Cannabis Derivative (NDPS Sec 20)</option>
         </select>
-        <button class="btn btn-gov-primary btn-sm" id="wb-btn-induct-${c.id}" onclick="inductWorkbenchWord(${c.id})">
+        <button class="btn btn-gov-primary btn-sm" id="wb-btn-induct-${c.id}" onclick="inductWorkbenchWord(${c.id})" style="font-weight: 700;">
           🛡️ Induct (BSA)
         </button>
-        <button class="btn btn-gov-secondary btn-sm" id="wb-btn-dismiss-${c.id}" onclick="dismissWorkbenchWord(${c.id})" style="color: #ef4444; border-color: #ef4444;">
+        <button class="btn btn-gov-secondary btn-sm" id="wb-btn-dismiss-${c.id}" onclick="dismissWorkbenchWord(${c.id})" style="color: #DC2626; border-color: #FCA5A5;">
           ✕ Reject
         </button>
       </div>
@@ -4190,6 +4219,11 @@ function updateCounts() {
   document.getElementById("count-slang").textContent = slang;
   document.getElementById("count-darknet").textContent = darknet;
   document.getElementById("count-image").textContent = image;
+
+  const tabTriageCount = document.getElementById("wb-tab-triage-count");
+  if (tabTriageCount) tabTriageCount.textContent = `${total} Leads`;
+  const tabFilesCount = document.getElementById("wb-tab-files-count");
+  if (tabFilesCount) tabFilesCount.textContent = `${REAL_FILES.length} Files`;
 
   updateDossierMetrics();
 }
@@ -4619,3 +4653,86 @@ function promptDeleteOfficer(officerId, officerName) {
   });
 }
 
+
+
+// ============================================================================
+// WORKBENCH TABBED LAYOUT CONTROLLER (SEGREGATED 3-PANEL VIEWS)
+// ============================================================================
+let CURRENT_WORKBENCH_TAB = 'evidence';
+let IS_WORKBENCH_SPLIT = false;
+
+function switchWorkbenchTab(tabName) {
+  CURRENT_WORKBENCH_TAB = tabName;
+
+  const tabs = ['evidence', 'triage', 'insights'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`wb-nav-btn-${t}`);
+    const panel = document.getElementById(t === 'insights' ? 'panel-insights' : `panel-${t}`);
+    if (btn) btn.classList.toggle('active', t === tabName);
+    if (panel) {
+      if (t === tabName) {
+        panel.classList.add('active');
+        panel.style.display = '';
+      } else {
+        panel.classList.remove('active');
+        if (!IS_WORKBENCH_SPLIT) {
+          panel.style.display = 'none';
+        }
+      }
+    }
+  });
+
+  const layout = document.getElementById('screen-dashboard');
+  if (layout && !IS_WORKBENCH_SPLIT) {
+    layout.classList.add('tabbed-mode');
+    layout.classList.remove('split-mode');
+  }
+
+  // If switching to insights with network graph, redraw network graph
+  if (tabName === 'insights') {
+    const graphBtn = document.getElementById('tab-btn-graph');
+    if (graphBtn && graphBtn.classList.contains('active')) {
+      setTimeout(() => renderNetworkGraph(), 50);
+    }
+  }
+}
+
+function toggleWorkbenchSplitView() {
+  IS_WORKBENCH_SPLIT = !IS_WORKBENCH_SPLIT;
+  const layout = document.getElementById('screen-dashboard');
+  const splitBtn = document.getElementById('wb-btn-split-toggle');
+  const splitIcon = document.getElementById('wb-split-icon');
+  const splitLabel = document.getElementById('wb-split-label');
+
+  const panels = [
+    document.getElementById('panel-evidence'),
+    document.getElementById('panel-triage'),
+    document.getElementById('panel-insights')
+  ];
+
+  if (layout) {
+    if (IS_WORKBENCH_SPLIT) {
+      layout.classList.remove('tabbed-mode');
+      layout.classList.add('split-mode');
+      if (splitIcon) splitIcon.textContent = '📑';
+      if (splitLabel) splitLabel.textContent = 'Tabbed Focus View';
+      if (splitBtn) {
+        splitBtn.classList.add('btn-gov-primary');
+        splitBtn.classList.remove('btn-gov-secondary');
+      }
+      panels.forEach(p => {
+        if (p) p.style.display = 'flex';
+      });
+    } else {
+      layout.classList.add('tabbed-mode');
+      layout.classList.remove('split-mode');
+      if (splitIcon) splitIcon.textContent = '⊞';
+      if (splitLabel) splitLabel.textContent = '3-Column Split View';
+      if (splitBtn) {
+        splitBtn.classList.remove('btn-gov-primary');
+        splitBtn.classList.add('btn-gov-secondary');
+      }
+      switchWorkbenchTab(CURRENT_WORKBENCH_TAB);
+    }
+  }
+}
