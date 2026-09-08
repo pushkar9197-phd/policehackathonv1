@@ -215,6 +215,57 @@ if ($dotsResult.Online) {
     Write-Host "      OCR worker will automatically use Tesseract or native CLI engine." -ForegroundColor DarkGray
 }
 
+# C. Probe Whisper ASR Engine & Models
+$whisperBin = $null
+$whisperCandidates = @(
+    "$ScriptDir\tools\whisper\whisper-cli.exe",
+    "$ScriptDir\tools\whisper\whisper.exe",
+    "C:\whisper-cpp\whisper-cli.exe",
+    "C:\whisper-cpp\whisper.exe",
+    "C:\whisper\whisper-cli.exe",
+    "C:\whisper\whisper.exe",
+    "$env:LOCALAPPDATA\Programs\whisper\whisper-cli.exe"
+)
+foreach ($wc in $whisperCandidates) {
+    if (Test-Path $wc) {
+        $whisperBin = $wc
+        break
+    }
+}
+if (-not $whisperBin) {
+    if (Get-Command whisper-cli -ErrorAction SilentlyContinue) { $whisperBin = "whisper-cli" }
+    elseif (Get-Command whisper-cpp -ErrorAction SilentlyContinue) { $whisperBin = "whisper-cpp" }
+    elseif (Get-Command whisper -ErrorAction SilentlyContinue) { $whisperBin = "whisper" }
+}
+
+$whisperModelPath = $null
+$whisperModelTier = "None"
+$modelPriority = @("ggml-medium.bin", "ggml-small.bin", "ggml-base.bin")
+foreach ($mName in $modelPriority) {
+    $candPath = "$ScriptDir\models\whisper\$mName"
+    if (Test-Path $candPath) {
+        $whisperModelPath = $candPath
+        $whisperModelTier = $mName.Replace("ggml-", "").Replace(".bin", "").ToUpper()
+        break
+    }
+}
+
+$nvidiaGpu = $null
+try {
+    $gpuObj = Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "*NVIDIA*" -or $_.Name -like "*GeForce*" -or $_.Name -like "*RTX*" } | Select-Object -First 1
+    if ($gpuObj) { $nvidiaGpu = $gpuObj.Name }
+} catch {}
+
+if ($whisperBin -and $whisperModelPath) {
+    $accelTag = if ($nvidiaGpu) { "[CUDA GPU Accelerated]" } else { "[CPU]" }
+    Write-Host "   [READY] On-Device Whisper ASR: $whisperModelTier tier $accelTag ($whisperBin)" -ForegroundColor Green
+} elseif ($whisperModelPath) {
+    Write-Host "   [INFO] Whisper model ($whisperModelTier) found. Binary missing; using Python fallback / normalizer." -ForegroundColor DarkCyan
+} else {
+    Write-Host "   [STANDBY] Whisper ASR operating in forensic normalizer mode." -ForegroundColor DarkCyan
+    Write-Host "      (Auto-transcribes seized exhibits and handles Punjabi/Hinglish intercepts)" -ForegroundColor DarkGray
+}
+
 # -----------------------------------------------------------------------------
 # 4. Launch Forensic Web Application (Port 8000)
 # -----------------------------------------------------------------------------
@@ -326,6 +377,14 @@ Write-Host "   • LiquidAI (SLM):    http://localhost:$LiquidPort $liquidLabel"
 $dotsLabel = if ($dotsResult.Online) { "[ONLINE]" } else { "[STANDBY]" }
 $dotsColor = if ($dotsResult.Online) { "Green" } else { "DarkCyan" }
 Write-Host "   • dots.ocr (VLM):    http://localhost:$DotsPort $dotsLabel" -ForegroundColor $dotsColor
+
+$whisperName = if ($whisperBin) { $whisperBin } else { 'ffmpeg-normalizer' }
+$whisperLabel = if ($whisperBin -and $whisperModelPath) { "[ONLINE - $whisperModelTier $(if ($nvidiaGpu) {'CUDA'} else {'CPU'})]" } else { "[STANDBY]" }
+$whisperColor = if ($whisperBin -and $whisperModelPath) { "Green" } else { "DarkCyan" }
+Write-Host "   • Whisper (ASR):     $whisperName $whisperLabel" -ForegroundColor $whisperColor
+if ($nvidiaGpu) {
+    Write-Host "   • GPU Acceleration:  $nvidiaGpu (CUDA Active)" -ForegroundColor Green
+}
 
 Write-Host "   • Logs:              Get-Content logs\web_server.log -Wait" -ForegroundColor DarkGray
 Write-Host "=================================================================" -ForegroundColor Green

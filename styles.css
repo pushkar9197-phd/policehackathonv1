@@ -2792,7 +2792,7 @@ body {
   width: 100%;
   height: calc(100vh - 58px);
   overflow-y: auto;
-  background: #F1F5F9;
+  background: #080e1a;
   padding: 0;
 }
 
@@ -2811,12 +2811,12 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-left: 4px solid #1D4ED8;
+  background: #0b1322;
+  border: 1px solid #1e293b;
+  border-left: 4px solid #1d4ed8;
   border-radius: 8px;
   padding: 18px 22px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .case-docket-title-area {
@@ -2830,9 +2830,9 @@ body {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  background: #EFF6FF;
-  color: #1D4ED8;
-  border: 1px solid #BFDBFE;
+  background: #1e3a8a;
+  color: #93c5fd;
+  border: 1px solid #3b82f6;
   border-radius: 4px;
   padding: 6px 10px;
   text-transform: uppercase;
@@ -2842,14 +2842,14 @@ body {
 .case-docket-title {
   font-size: 17px;
   font-weight: 700;
-  color: #0F172A;
+  color: #f8fafc;
   letter-spacing: 0.02em;
   margin-bottom: 3px;
 }
 
 .case-docket-subtitle {
   font-size: 11.5px;
-  color: #64748B;
+  color: #94a3b8;
   line-height: 1.4;
 }
 
@@ -2861,13 +2861,13 @@ body {
 }
 
 .case-docket-actions .btn-gov-secondary {
-  background: #FFFFFF;
-  color: #0F172A;
-  border: 1px solid #CBD5E1;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #334155;
 }
 .case-docket-actions .btn-gov-secondary:hover {
-  background: #F8FAFC;
-  border-color: #94A3B8;
+  background: #334155;
+  color: #ffffff;
 }
 
 /* Docket Stats Ribbon */
@@ -2878,19 +2878,18 @@ body {
 }
 
 .docket-stat-card {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .docket-stat-label {
   font-size: 10px;
   font-weight: 700;
-  color: #64748B;
+  color: #94a3b8;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 4px;
@@ -2899,14 +2898,14 @@ body {
 .docket-stat-val {
   font-family: var(--font-mono);
   font-size: 22px;
-  font-weight: 800;
-  color: #0F172A;
+  font-weight: 700;
+  color: #f8fafc;
   line-height: 1.2;
 }
 
 .docket-stat-sub {
   font-size: 10.5px;
-  color: #94A3B8;
+  color: #64748b;
   margin-top: 4px;
 }
 
@@ -2916,11 +2915,10 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
   padding: 10px 14px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .docket-search-box {
@@ -2933,20 +2931,20 @@ body {
 
 .docket-search-icon {
   font-size: 13px;
-  color: #64748B;
+  color: #64748b;
 }
 
 .docket-search-box .gov-input {
-  background: #FFFFFF;
-  border: 1px solid #CBD5E1;
-  color: #0F172A;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
   width: 100%;
 }
 .docket-search-box .gov-input::placeholder {
-  color: #94A3B8;
+  color: #64748b;
 }
 .docket-search-box .gov-input:focus {
-  border-color: #1D4ED8;
+  border-color: #38bdf8;
   outline: none;
 }
 
@@ -2956,9 +2954,9 @@ body {
 }
 
 .docket-filter-btn {
-  background: #F1F5F9;
-  color: #475569;
-  border: 1px solid #CBD5E1;
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
   border-radius: 4px;
   padding: 4px 10px;
   font-size: 11px;
@@ -2968,52 +2966,52 @@ body {
 }
 
 .docket-filter-btn:hover {
-  background: #E2E8F0;
-  color: #0F172A;
+  background: #334155;
+  color: #f8fafc;
 }
 
 .docket-filter-btn.active {
-  background: #1D4ED8;
-  color: #FFFFFF;
-  border-color: #1D4ED8;
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #3b82f6;
 }
 
 /* Docket Table Card */
 .docket-table-card {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .docket-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 11.5px;
-  color: #1E293B;
+  color: #e2e8f0;
 }
 
 .docket-table th {
-  background: #F8FAFC;
-  color: #475569;
+  background: #0b1322;
+  color: #94a3b8;
   font-weight: 700;
-  font-size: 10px;
+  font-size: 10.5px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 10px 14px;
-  border-bottom: 1px solid #E2E8F0;
+  border-bottom: 1px solid #334155;
   text-align: left;
 }
 
 .docket-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid #F1F5F9;
+  padding: 10px 14px;
+  border-bottom: 1px solid #1e293b;
   vertical-align: middle;
 }
 
 .docket-table tr:hover td {
-  background: #F8FAFC;
+  background: rgba(30, 41, 59, 0.6);
 }
 
 .docket-table tr:last-child td {
@@ -3021,14 +3019,14 @@ body {
 }
 
 .btn-danger-subtle {
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
-  color: #DC2626;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  color: #f87171;
   font-weight: 600;
 }
 .btn-danger-subtle:hover {
-  background: #FEE2E2;
-  color: #B91C1C;
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
 }
 
 /* ==========================================================================
@@ -3041,9 +3039,9 @@ button.btn-header-profile,
   display: inline-flex !important;
   align-items: center !important;
   gap: 7px !important;
-  background: #F1F5F9 !important;
-  border: 1px solid #CBD5E1 !important;
-  color: #0F172A !important;
+  background: rgba(30, 58, 138, 0.5) !important;
+  border: 1px solid rgba(96, 165, 250, 0.5) !important;
+  color: #f8fafc !important;
   padding: 4px 12px !important;
   border-radius: 20px !important;
   cursor: pointer !important;
@@ -3053,22 +3051,21 @@ button.btn-header-profile,
   transition: all 0.2s ease !important;
   white-space: nowrap !important;
   outline: none !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
 }
 
 button.btn-header-profile:hover,
 .btn-header-profile:hover {
-  background: #E2E8F0 !important;
-  border-color: #94A3B8 !important;
+  background: rgba(30, 58, 138, 0.8) !important;
+  border-color: #60a5fa !important;
 }
 
 .officer-avatar-circle {
   width: 20px !important;
   height: 20px !important;
   border-radius: 50% !important;
-  background: #EFF6FF !important;
-  border: 1px solid #BFDBFE !important;
-  color: #1D4ED8 !important;
+  background: #1e3a8a !important;
+  border: 1px solid #3b82f6 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -3081,14 +3078,13 @@ button.btn-header-profile:hover,
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
   border-radius: 6px !important;
   padding: 8px 14px !important;
   margin-bottom: 12px !important;
   gap: 12px !important;
   flex-wrap: wrap !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
 }
 
 .docket-scope-tabs {
@@ -3098,9 +3094,9 @@ button.btn-header-profile:hover,
 }
 
 .docket-scope-tab {
-  background: #F8FAFC !important;
-  border: 1px solid #CBD5E1 !important;
-  color: #475569 !important;
+  background: transparent !important;
+  border: 1px solid #334155 !important;
+  color: #94a3b8 !important;
   font-family: var(--font-sans) !important;
   font-size: 11.5px !important;
   font-weight: 600 !important;
@@ -3112,14 +3108,15 @@ button.btn-header-profile:hover,
 }
 
 .docket-scope-tab:hover {
-  background: #E2E8F0 !important;
-  color: #0F172A !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f1f5f9 !important;
+  border-color: #475569 !important;
 }
 
 .docket-scope-tab.active {
-  background: #EFF6FF !important;
-  color: #1D4ED8 !important;
-  border-color: #BFDBFE !important;
+  background: #1e3a8a !important;
+  color: #60a5fa !important;
+  border-color: #3b82f6 !important;
   font-weight: 700 !important;
 }
 
@@ -3128,11 +3125,11 @@ button.btn-header-profile:hover,
   align-items: center !important;
   gap: 8px !important;
   font-size: 11.5px !important;
-  background: #F8FAFC !important;
+  background: rgba(15, 23, 42, 0.6) !important;
   padding: 4px 12px !important;
   border-radius: 4px !important;
-  border: 1px solid #E2E8F0 !important;
-  color: #475569 !important;
+  border: 1px solid #334155 !important;
+  color: #94a3b8 !important;
 }
 
 .btn-text-action {
@@ -3493,3 +3490,30 @@ button.btn-header-profile:hover,
   word-break: break-word;
   overflow-wrap: break-word;
 }
+
+/* Evidence Audio Player Bar Styles */
+.evidence-audio-player-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #0b1329 !important;
+  border-bottom: 1px solid #1e293b !important;
+  border-left: 3px solid #38bdf8 !important;
+}
+
+.evidence-audio-player-bar audio {
+  width: 100%;
+  height: 32px;
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot-purple { background: #8b5cf6; }
+.dot-blue { background: #3b82f6; }
+.dot-amber { background: #f59e0b; }
+.dot-green { background: #10b981; }
